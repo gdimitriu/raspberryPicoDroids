@@ -46,8 +46,8 @@ unsigned int rightMotorPin2 = 10;
 unsigned int rightMotorEncoder = 17;
 long rightResolutionCodor = 20;
 float rightPPI;
-long countRotate90Left= 5;
-long countRotate90Right= 5;
+long countRotate90Left= 7;
+long countRotate90Right= 7;
 
 //sensors
 unsigned int frontSensorPin = 13;
@@ -91,7 +91,7 @@ void makeCleanup() {
 /*
  * make the move of the platform
  */
-bool makeMove(bool isHuman) {
+bool makeMove(bool isHuman, int isReverse) {
 	if (bufferIndex > 0) {
 		bufferReceive[bufferIndex] = '\0';
 	}
@@ -203,7 +203,7 @@ bool makeMove(bool isHuman) {
 				memset(bufferReceive, '\0', sizeof(char)*BLE_BUFFER);
 				bufferIndex = strlen(commandsCurrentPoint->data) + 1;
 				strncpy(bufferReceive, commandsCurrentPoint->data, strlen(commandsCurrentPoint->data));
-				makeMove(false);
+				makeMove(false, 0);
 				commandsCurrentPoint = getNext(commandsCurrentPoint);				
 			}
 		}
@@ -214,14 +214,32 @@ bool makeMove(bool isHuman) {
 			memset(bufferSend,'\0',sizeof(char)*BLE_BUFFER_SEND);
 			sprintf(bufferSend,"OK\r\n");
 			uart_puts(uart1,bufferSend);
+			//rotate 180 degree
+			memset(bufferReceive, '\0', sizeof(char)*BLE_BUFFER);
+			strncpy(bufferReceive, "m0,1", 4);
+			bufferIndex = 5;
+			makeMove(false, 0);
+			memset(bufferReceive, '\0', sizeof(char)*BLE_BUFFER);
+			strncpy(bufferReceive, "m0,1", 4);
+			bufferIndex = 5;
+			makeMove(false, 0);
 			commandsCurrentPoint = commandsEndPoint;
 			while ( commandsCurrentPoint != NULL ) {
 				memset(bufferReceive, '\0', sizeof(char)*BLE_BUFFER);
 				bufferIndex = strlen(commandsCurrentPoint->data) + 1;
 				strncpy(bufferReceive, commandsCurrentPoint->data, strlen(commandsCurrentPoint->data));
-				makeMove(false);
+				makeMove(false, 1);
 				commandsCurrentPoint = getPrevious(commandsCurrentPoint);
 			}
+			//rotate 180 degree
+			memset(bufferReceive, '\0', sizeof(char)*BLE_BUFFER);
+			strncpy(bufferReceive, "m0,1", 4);
+			bufferIndex = 5;
+			makeMove(false, 0);
+			memset(bufferReceive, '\0', sizeof(char)*BLE_BUFFER);
+			strncpy(bufferReceive, "m0,1", 4);
+			bufferIndex = 5;
+			makeMove(false, 0);
 		}
 		/*
 		 * clear the command list
@@ -252,7 +270,7 @@ bool makeMove(bool isHuman) {
 			return true;
 		}
 		/*
-		 * unkown command
+		 * unknown command
 		 */
 		else {
 #ifdef SERIAL_DEBUG_MODE
@@ -474,6 +492,12 @@ bool makeMove(bool isHuman) {
 				idx++;
 			}
 			int rotateData = atoi(buf);
+			if (isReverse == 1) {
+				rotateData = -rotateData;
+			} else if ( isReverse == 2) { //not implemented yet
+				rotateData = -rotateData;
+				moveData = -moveData;
+			}
 #ifdef SERIAL_DEBUG_MODE
 			printf("%s\n%f:%d\n",bufferReceive,moveData,rotateData);
 #endif        
@@ -496,8 +520,7 @@ bool makeMove(bool isHuman) {
 			}
 			bufferReceive[strlen(bufferReceive)] = '\0';
 			if ( commandsCurrentPoint == NULL ) {
-				commandsStartPoint = allocate();
-				commandsCurrentPoint = commandsStartPoint;
+				commandsCurrentPoint = commandsStartPoint = allocate();
 			} else {
 				string_list_node *node = allocate();
 				node->previous = commandsCurrentPoint;
@@ -517,7 +540,7 @@ bool makeMove(bool isHuman) {
 			return true;
 		}
 		/*
-		 * command unkown
+		 * command unknown
 		 */
 		else {
 			sprintf(bufferSend,"%d\r\n",0);
@@ -611,7 +634,7 @@ int main() {
 #ifdef SERIAL_DEBUG_MODE				
 				printf("<<%s>>index=%d\n", bufferReceive,bufferIndex);
 #endif			
-				makeMove(true);
+				makeMove(true, 0);
 				makeCleanup();
 			} else {
 				bufferIndex++;

@@ -313,7 +313,7 @@ void clearEncoders() {
 }
 
 /*
- * Move the platform with dinstance or rotate with encoders
+ * Move the platform with distance or rotate with encoders
  */
 void moveOrRotateWithDistance(float moveData, int rotateData) {
 	humanCommand = false;
