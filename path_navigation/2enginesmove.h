@@ -1,9 +1,26 @@
 /*
- * 2enginesmove.h
+ * moving robot raspberry pico and BLE
+ * 
+ * 2enginesmove.h (actual driving the engines)
+ * 
+ * Copyright 2024 Gabriel Dimitriu
  *
- *  Created on: June 29, 2022
- *      Author: Gabriel Dimitriu 2022
- */
+ * This file is part of raspberryPicoDroids project.
+
+ * raspberryPicoDroids is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * raspberryPicoDroids is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with raspberryPicoDroids; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+*/
 #ifndef _2ENGINESMOVE_H_
 #define _2ENGINESMOVE_H_
 

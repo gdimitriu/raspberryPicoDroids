@@ -1,7 +1,7 @@
 /*
  * moving robot raspberry pico and BLE
  * 
- * string_list.c (a string list that is used to store path commands)
+ * communication.c (special communication)
  * 
  * Copyright 2024 Gabriel Dimitriu
  *
@@ -21,34 +21,28 @@
  * along with raspberryPicoDroids; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 */
-#include "string_list.h"
+#include <string.h>
 #include <stdlib.h>
+#include <hardware/uart.h>
 
-string_list_node *allocate(void) {
-	string_list_node * theNode;
-	theNode = calloc(1, sizeof(string_list_node));
-	theNode-> next = NULL;
-	theNode->previous = NULL;
-	theNode->data = NULL;
-	return theNode;
+#include "communication.h"
+
+int bufferIndex = 0;
+char inChar = '\0';
+char bufferReceive[BUFFER];
+char bufferSend[BUFFER_SEND];
+
+/*
+ * clean the input buffers
+ */
+void makeCleanup() {
+	for (bufferIndex = 0; bufferIndex < BUFFER; bufferIndex++) {
+		bufferReceive[bufferIndex] = '\0';
+	}
+	bufferIndex = 0;
+	inChar ='\0';
 }
 
-string_list_node *getNext(string_list_node *theNode) {
-	return theNode->next;
-}
-
-string_list_node *getPrevious(string_list_node *theNode) {
-	return theNode->previous;
-}
-
-bool isAtBeginig(string_list_node *theNode) {
-	if ( theNode->previous == NULL )
-		return true;
-	return false;
-}
-
-bool isAtEnd(string_list_node *theNode) {
-	if ( theNode->next == NULL ) 
-		return true;
-	return false;
+void sendData(char *buffer) {
+	uart_puts(uart1,buffer);
 }

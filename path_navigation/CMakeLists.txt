@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.5)
 
 # initialize the SDK based on PICO_SDK_PATH
 # note: this must happen before project()
@@ -10,7 +10,7 @@ project(path_navigation)
 pico_sdk_init()
 if (TARGET tinyusb_device)
 	add_executable(path_navigation
-        encoder_ble.c 2enginesmove.c string_list.c
+        encoder_ble.c 2enginesmove.c string_list.c make_move.c communication.c
         )
 
 	# Pull in our pico_stdlib which pulls in commonly used features

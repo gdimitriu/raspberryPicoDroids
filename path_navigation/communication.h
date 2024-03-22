@@ -1,7 +1,7 @@
 /*
  * moving robot raspberry pico and BLE
  * 
- * string_list.c (a string list that is used to store path commands)
+ * communication.h (special communication)
  * 
  * Copyright 2024 Gabriel Dimitriu
  *
@@ -21,34 +21,13 @@
  * along with raspberryPicoDroids; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 */
-#include "string_list.h"
-#include <stdlib.h>
+#ifndef __COMMUNICATION_H__
+#define __COMMUNICATION_H__
 
-string_list_node *allocate(void) {
-	string_list_node * theNode;
-	theNode = calloc(1, sizeof(string_list_node));
-	theNode-> next = NULL;
-	theNode->previous = NULL;
-	theNode->data = NULL;
-	return theNode;
-}
+#include "configuration.h"
 
-string_list_node *getNext(string_list_node *theNode) {
-	return theNode->next;
-}
+extern void makeCleanup();
 
-string_list_node *getPrevious(string_list_node *theNode) {
-	return theNode->previous;
-}
+extern void sendData(char *buffer);
 
-bool isAtBeginig(string_list_node *theNode) {
-	if ( theNode->previous == NULL )
-		return true;
-	return false;
-}
-
-bool isAtEnd(string_list_node *theNode) {
-	if ( theNode->next == NULL ) 
-		return true;
-	return false;
-}
+#endif
