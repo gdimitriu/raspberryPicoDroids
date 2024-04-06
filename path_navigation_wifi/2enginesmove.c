@@ -103,6 +103,12 @@ void breakEngines() {
 * Move the platform in predefined directions.
 */
 void go(int speedLeft, int speedRight) {
+
+#ifdef TEST_COMMANDS
+	printf("Move with left=%d right=%d\n", speedLeft, speedRight);
+	fflush(stdout);
+	return;
+#endif
 	if (speedLeft == 0 && speedRight == 0 ) {
 		pwm_set_gpio_level(leftMotorPin1,LOW);
 		pwm_set_gpio_level(leftMotorPin2,LOW);
@@ -333,6 +339,12 @@ void clearEncoders() {
  * Move the platform with distance or rotate with encoders
  */
 void moveOrRotateWithDistance(float moveData, int rotateData) {
+	
+#ifdef TEST_COMMANDS
+	printf("moveOrRotateWithDistance distance=%f rotate=%d\n", moveData, rotateData);
+	fflush(stdout);
+	return;
+#endif
 	humanCommand = false;
 	go(0,0);
 	clearEncoders();

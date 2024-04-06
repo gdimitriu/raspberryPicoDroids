@@ -4,11 +4,6 @@
 #include "configuration.h"
 
 /*
- * make cleanup of the wifi receive buffer
- */
-extern void makeCleanup();
-
-/*
  * send the data using wifi
  */
 extern void sendData(char *buffer);

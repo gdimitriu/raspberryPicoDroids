@@ -50,14 +50,26 @@ static err_t tcp_server_close(void *arg);
 /*
  * clean the input buffers
  */
-void makeCleanup() {
-	memset(currentState->buffer_recv, 0, sizeof(uint8_t)*WIFI_BUFFER_SEND);
+static void makeCleanup() {
+#ifdef SERIAL_DEBUG_MODE
+	printf("make cleanup begin\n");
+	fflush(stdout);
+#endif
+	memset(currentState->buffer_recv, 0, sizeof(uint8_t)*WIFI_BUFFER);
 	currentState->recv_len = 0;
 	bufferIndex = 0;
+#ifdef SERIAL_DEBUG_MODE
+	printf("make cleanup end\n");
+	fflush(stdout);
+#endif
 }
 
 
 static void tcp_server_err(void *arg, err_t err) {
+#ifdef SERIAL_DEBUG_MODE
+	printf("error_tcp %d\n",err);
+	fflush(stdout);
+#endif
 	TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
     if (err != ERR_ABRT) {
         DEBUG_printf("tcp_client_err_fn %d\n", err);
@@ -73,14 +85,20 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
 {
     TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
     state->sent_len = 0;
-    DEBUG_printf("Writing %lu bytes to client\n", strlen(state->buffer_sent));
+#ifdef SERIAL_DEBUG_MODE	
+    printf("Writing %lu bytes to client\n", strlen(state->buffer_sent));
+	fflush(stdout);
+#endif	
     // this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
     // can use this method to cause an assertion in debug mode, if this method is called when
     // cyw43_arch_lwip_begin IS needed
     cyw43_arch_lwip_check();
     err_t err = tcp_write(tpcb, state->buffer_sent, strlen(state->buffer_sent), TCP_WRITE_FLAG_COPY);
     if (err != ERR_OK) {
-        DEBUG_printf("Failed to write data %d\n", err);
+#ifdef SERIAL_DEBUG_MODE		
+        printf("Failed to write data %d\n", err);
+		fflush(stdout);
+#endif		
 		state->complete = true;
         return tcp_server_close(arg);
     }
@@ -89,7 +107,10 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
 
 
 err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
-	DEBUG_printf("runn recv on core %d\n",get_core_num());
+#ifdef SERIAL_DEBUG_MODE
+	printf("runn recv on core %d\n",get_core_num());
+	fflush(stdout);
+#endif	
     TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
     if (!p) {
         state->complete = true;
@@ -100,27 +121,42 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
     // cyw43_arch_lwip_begin IS needed
     cyw43_arch_lwip_check();
     if (p->tot_len > 0) {
-        DEBUG_printf("tcp_server_recv %d/%d err %d\n", p->tot_len, state->recv_len, err);
+#ifdef SERIAL_DEBUG_MODE		
+        printf("tcp_server_recv %d/%d err %d\n", p->tot_len, state->recv_len, err);
+		fflush(stdout);
+#endif
         // Receive the buffer
         state->recv_len = pbuf_copy_partial(p, state->buffer_recv, p->tot_len, 0);
-		DEBUG_printf("tcp_server_recv_data %s\n",state->buffer_recv);
+#ifdef SERIAL_DEBUG_MODE		
+		printf("tcp_server_recv_data %s\n",state->buffer_recv);
+		fflush(stdout);
+#endif
         tcp_recved(tpcb, p->tot_len);
 		bufferIndex = 0;
+		int skip = 0;
+		int currentCommand = 0;
 		for ( int i = 0 ; i < state->recv_len; ++i) {
 			if ( state->buffer_recv[i] == '#' ) {
 				if ( bufferIndex > 0 ) {
-					bufferReceive = &state->buffer_recv[bufferIndex + 1];
-					bufferIndex = i - (bufferIndex + 1);
+					bufferReceive = bufferReceive + (bufferIndex + skip);
+					bufferIndex = currentCommand ;
 				}
 				else {
 					bufferReceive = state->buffer_recv;
 					bufferIndex = i;
 				}
-				state->buffer_recv[i+1] = '\0';
 				makeMove(true,0);
+				skip = 1;
+				currentCommand = 0;
+			} else {
+				if ( state->buffer_recv[i] == '\n' || state->buffer_recv[i] == '\r' || state->buffer_recv[i] == ' ' || state->buffer_recv[i] == '\0') {
+					skip++;
+					continue;
+				}
+				++currentCommand;
 			}
 		}
-		return ERR_OK;
+		makeCleanup();
     }
     pbuf_free(p);
 
@@ -130,17 +166,21 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
 static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err) {
     TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
     if (err != ERR_OK || client_pcb == NULL) {
-        DEBUG_printf("Failure in accept\n");
+#ifdef SERIAL_DEBUG_MODE		
+        printf("Failure in accept\n");
+		fflush(stdout);
+#endif
         state->complete = true;
         tcp_server_close(arg);
 		isStarted = false;
         return ERR_VAL;
     }
-    DEBUG_printf("Client connected\n");
+#ifdef SERIAL_DEBUG_MODE    
+    printf("Client connected\n");
+#endif
 
     state->client_pcb = client_pcb;
     tcp_arg(client_pcb, state);
-    //tcp_sent(client_pcb, tcp_server_sent);
     tcp_recv(client_pcb, tcp_server_recv);
     tcp_err(client_pcb, tcp_server_err);
 
@@ -150,23 +190,31 @@ static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
 static bool tcp_server_open(void *arg) {
 	
     TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
-    DEBUG_printf("Starting server at %s on port %u\n", ip4addr_ntoa(netif_ip4_addr(netif_list)), WIFI_TCP_PORT);
+#ifdef SERIAL_DEBUG_MODE	
+    printf("Starting server at %s on port %u\n", ip4addr_ntoa(netif_ip4_addr(netif_list)), WIFI_TCP_PORT);
+#endif	
 
     struct tcp_pcb *pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
     if (!pcb) {
-        DEBUG_printf("failed to create pcb\n");
+#ifdef SERIAL_DEBUG_MODE		
+        printf("failed to create pcb\n");
+#endif
         return false;
     }
 
     err_t err = tcp_bind(pcb, NULL, WIFI_TCP_PORT);
     if (err) {
-        DEBUG_printf("failed to bind to port %u\n", WIFI_TCP_PORT);
+#ifdef SERIAL_DEBUG_MODE		
+        printf("failed to bind to port %u\n", WIFI_TCP_PORT);
+#endif
         return false;
     }
 
     state->server_pcb = tcp_listen_with_backlog(pcb, 1);
     if (!state->server_pcb) {
-        DEBUG_printf("failed to listen\n");
+#ifdef SERIAL_DEBUG_MODE		
+        printf("failed to listen\n");
+#endif		
         if (pcb) {
             tcp_close(pcb);
         }
@@ -181,6 +229,10 @@ static bool tcp_server_open(void *arg) {
 
 
 static err_t tcp_server_close(void *arg) {
+#ifdef SERIAL_DEBUG_MODE
+	printf("close connection\n");
+	fflush(stdout);
+#endif
     TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
     err_t err = ERR_OK;
     if (state->client_pcb != NULL) {
@@ -191,7 +243,9 @@ static err_t tcp_server_close(void *arg) {
         tcp_err(state->client_pcb, NULL);
         err = tcp_close(state->client_pcb);
         if (err != ERR_OK) {
-            DEBUG_printf("close failed %d, calling abort\n", err);
+#ifdef SERIAL_DEBUG_MODE			
+            printf("close failed %d, calling abort\n", err);
+#endif			
             tcp_abort(state->client_pcb);
             err = ERR_ABRT;
         }
@@ -214,7 +268,9 @@ void initWifi() {
 	if ( !isStarted ) {
 		currentState = calloc(1, sizeof(TCP_SERVER_T));
 		if (!currentState) {
-			DEBUG_printf("failed to allocate state\n");
+#ifdef SERIAL_DEBUG_MODE			
+			printf("failed to allocate state\n");
+#endif			
 			isStarted = false;
 			return;
 		} else { 

@@ -92,13 +92,7 @@ int main() {
     pwm_config_set_clkdiv(&config, 4.f);
     // Load the configuration into our PWM slice, and set it running.
     pwm_init(slice_num, &config, true);
-//	gpio_init(leftMotorEncoder);
-//    gpio_set_dir(leftMotorEncoder, GPIO_IN);
-//    gpio_pull_down(leftMotorEncoder);
 	gpio_set_irq_enabled_with_callback(leftMotorEncoder, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-//	gpio_init(rightMotorEncoder);
-//    gpio_set_dir(rightMotorEncoder, GPIO_IN);
-//    gpio_pull_down(rightMotorEncoder);
 	gpio_set_irq_enabled_with_callback(rightMotorEncoder, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 	gpio_set_irq_enabled_with_callback(frontSensorPin, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 	gpio_set_irq_enabled_with_callback(backSensorPin, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
@@ -106,28 +100,32 @@ int main() {
 	//update configuration
 	computePPI();
 	commandsStartPoint = commandsCurrentPoint = NULL;
-	makeCleanup();
+	
 #ifdef SERIAL_DEBUG_MODE	
+	getchar();
 	printf("Started\n");
 	fflush(stdout);
 #endif
-	const char *wifi_ssid = "xxxx";
-	const char *password = "xxxx";
 	 if (cyw43_arch_init()) {
         printf("failed to initialise\n");
         return 1;
     }
-#ifdef SERIAL_DEBUG_MODE
+    
     cyw43_arch_enable_sta_mode();
-#endif
-    printf("Connecting to Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(wifi_ssid, password, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+#ifdef SERIAL_DEBUG_MODE
+	printf("Connecting to Wi-Fi...\n");
+#endif	
+    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+#ifdef SERIAL_DEBUG_MODE	
         printf("failed to connect.\n");
+#endif		
         return 1;
     } else {
+#ifdef SERIAL_DEBUG_MODE
         printf("Connected.\n");
+#endif		
     }
-    while( 1) {
+    while(true) {
 		initWifi();
 	}
 	cyw43_arch_deinit();

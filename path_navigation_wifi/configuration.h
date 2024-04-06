@@ -26,9 +26,7 @@
 
 	#include "string_list.h"
 	
-	#define SERIAL_DEBUG_MODE true
-	
-	#define WIFI_BUFFER 256
+	#define WIFI_BUFFER 512
 	#define WIFI_BUFFER_SEND 512
 	
 	#define WIFI_TCP_PORT 4242
@@ -87,5 +85,11 @@ typedef struct TCP_SERVER_T_ {
     int sent_len;
     int recv_len;
 } TCP_SERVER_T;
+	
+	#define SERIAL_DEBUG_MODE true
 
+//	#define TEST_COMMANDS true
+#ifdef TEST_COMMANDS
+	#define SERIAL_DEBUG_MODE true
+#endif
 #endif

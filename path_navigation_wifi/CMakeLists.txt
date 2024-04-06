@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+set(PICO_BOARD pico_w)
+
 # initialize the SDK based on PICO_SDK_PATH
 # note: this must happen before project()
 include(pico_sdk_import.cmake)
@@ -12,7 +14,10 @@ if (TARGET tinyusb_device)
 	add_executable(path_navigation_wifi
         encoder_ble.c 2enginesmove.c string_list.c server_wifi.c make_move.c
         )
-
+	target_compile_definitions(path_navigation_wifi PRIVATE
+        WIFI_SSID=\"$ENV{WIFI_SSID}\"
+        WIFI_PASSWORD=\"$ENV{WIFI_PASSWORD}\"
+	)
 	target_include_directories(path_navigation_wifi PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts

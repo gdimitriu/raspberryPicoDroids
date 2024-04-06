@@ -279,15 +279,13 @@ static bool commandWithoutData() {
 	else if (bufferReceive[0] == 'b') {
 		breakEngines();
 		isValidInput = true;
-		makeCleanup();
-		return false;
+		return true;
 	}
 	/*
 	 * return encoder values
 	 */
 	else if (bufferReceive[0] == 'C') {		
 		sendEncoderValues();
-		makeCleanup();
 		isValidInput = true;
 		return true;
 	}
@@ -296,7 +294,6 @@ static bool commandWithoutData() {
 	 */
 	else if (bufferReceive[0] == 'R') {
 		resetEncoders();
-		makeCleanup();
 		isValidInput = true;
 		return true;
 	}
@@ -322,10 +319,9 @@ static bool commandWithoutData() {
 	 * unknown command
 	 */
 	else {
-		sendUnsupported();
+		//sendUnsupported();
 		isValidInput = false;
 	}
-	makeCleanup();
 	return true;
 }
 
@@ -342,19 +338,16 @@ static bool setMaxPower() {
 	}
 	if (!isValidNumber(bufferReceive, bufferIndex - 2)) {
 		isValidInput = false;
-		makeCleanup();
 		return false;
 	}
 	if (atol(bufferReceive) > absoluteMaxPower || atol(bufferReceive) < 0) {
 		isValidInput = false;
-		makeCleanup();
 		return false;
 	}
 #ifdef SERIAL_DEBUG_MODE
 	printf("MaxPower=%s\n",bufferReceive);
 #endif        
 	maxPower = atol(bufferReceive);
-	makeCleanup();
 	isValidInput = true;
 	return true;
 }
@@ -372,19 +365,18 @@ static bool setMinimumPower() {
 	}
 	if (!isValidNumber(bufferReceive, bufferIndex - 2)) {
 		isValidInput = false;
-		makeCleanup();
+		//do not makeCleanup();
 		return false;
 	}
 	if (atol(bufferReceive) > maxPower || atol(bufferReceive) < 0) {
 		isValidInput = false;
-		makeCleanup();
+		//do not makeCleanup();
 		return false;
 	}
 #ifdef SERIAL_DEBUG_MODE
 	printf("MinPower=%s\n",bufferReceive);
 #endif                
 	minPower = atol(bufferReceive);
-	makeCleanup();
 	isValidInput = true;
 	return true;
 }
@@ -400,19 +392,18 @@ static bool setCurrentPower(bool isHuman) {
 	}
 	if (!isValidNumber(bufferReceive, bufferIndex - 2)) {
 		isValidInput = false;
-		makeCleanup();
+		//do not makeCleanup();
 		return false;
 	}
 	if (atol(bufferReceive) > maxPower || atol(bufferReceive) < 0) {
 		isValidInput = false;
-		makeCleanup();
+		//do not makeCleanup();
 		return false;
 	}
 #ifdef SERIAL_DEBUG_MODE
 	printf("CurrentPower=%s\n",bufferReceive);
 #endif                
 	currentPower = atol(bufferReceive);
-	makeCleanup();
 	isValidInput = true;
 	return true;
 }
@@ -471,7 +462,6 @@ static bool moveOrRotateUtilStopCommand() {
 			go(currentPower, -currentPower);
 		}
 	}
-	makeCleanup();
 	isValidInput = true;
 	return true;
 }
@@ -525,7 +515,6 @@ static bool moveOrRotateByValue(int isReverse) {
 	} else {
 		moveOrRotateWithDistance(moveData,rotateData);
 	}
-	makeCleanup();
 	isValidInput = true;
 	return true;
 }
@@ -556,7 +545,6 @@ static bool putPathValue() {
 	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
 	sprintf(bufferSend,"OK\r\n");
 	sendData(bufferSend);
-	makeCleanup();
 	return true;
 }
 
@@ -584,7 +572,6 @@ static bool commandWithData(bool isHuman, int isReverse) {
 	 */
 	else if (bufferReceive[0] == 'd') {
 		sendUnsupported();
-		makeCleanup();
 		isValidInput = true;
 		return true;
 	}
@@ -593,7 +580,6 @@ static bool commandWithData(bool isHuman, int isReverse) {
 	 */
 	else if (bufferReceive[0] == 's') {
 		sendUnsupported();
-		makeCleanup();
 		isValidInput = true;
 		return true;
 	}
@@ -619,12 +605,12 @@ static bool commandWithData(bool isHuman, int isReverse) {
 	 * command unknown
 	 */
 	else {
-		sendUnsupported();
-		makeCleanup();
+		//do not send
+		//sendUnsupported();
+		//do not makeCleanup();
 		isValidInput = false;
 		return false;
 	}
-	makeCleanup();
     return true;
 }
 
@@ -637,6 +623,9 @@ bool makeMove(bool isHuman, int isReverse) {
 		bufferReceive[bufferIndex] = '\0';
 	}
 	if (strlen(bufferReceive) == 1) {
+#ifdef SERIAL_DEBUG_MODE
+		printf("Received without data %s\n",bufferReceive);
+#endif			
 		return commandWithoutData();
 	}
 	/*
