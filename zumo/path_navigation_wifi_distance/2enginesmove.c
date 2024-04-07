@@ -1,9 +1,26 @@
 /*
- * 2enginesmove.c
+ * moving robot raspberry pico w (WIFI based)
+ * 
+ * 2enginesmove.c (actual driving the engines)
+ * 
+ * Copyright 2024 Gabriel Dimitriu
  *
- *  Created on: June 29, 2022
- *      Author: Gabriel Dimitriu 2022
- */
+ * This file is part of raspberryPicoDroids project.
+
+ * raspberryPicoDroids is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * raspberryPicoDroids is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with raspberryPicoDroids; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+*/
 #include <math.h>
 #include <pico/stdlib.h>
 #include <hardware/gpio.h>
@@ -86,6 +103,12 @@ void breakEngines() {
 * Move the platform in predefined directions.
 */
 void go(int speedLeft, int speedRight) {
+
+#ifdef TEST_COMMANDS
+	printf("Move with left=%d right=%d\n", speedLeft, speedRight);
+	fflush(stdout);
+	return;
+#endif
 	if (speedLeft == 0 && speedRight == 0 ) {
 		pwm_set_gpio_level(leftMotorPin1,LOW);
 		pwm_set_gpio_level(leftMotorPin2,LOW);
@@ -313,9 +336,15 @@ void clearEncoders() {
 }
 
 /*
- * Move the platform with dinstance or rotate with encoders
+ * Move the platform with distance or rotate with encoders
  */
 void moveOrRotateWithDistance(float moveData, int rotateData) {
+	
+#ifdef TEST_COMMANDS
+	printf("moveOrRotateWithDistance distance=%f rotate=%d\n", moveData, rotateData);
+	fflush(stdout);
+	return;
+#endif
 	humanCommand = false;
 	go(0,0);
 	clearEncoders();

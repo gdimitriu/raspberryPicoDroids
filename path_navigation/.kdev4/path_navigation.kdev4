@@ -7,12 +7,12 @@ Current Build Directory Index-Host System=0
 
 [CMake][CMake Build Directory 0]
 Build Directory Path=/home/onion/micro/raspberryPicoDroids/path_navigation/build
-Build Type=Release
+Build Type=Debug
 CMake Binary=/snap/bin/cmake
 CMake Executable=/snap/bin/cmake
 Environment Profile=
 Extra Arguments=
-Install Directory=/usr/local
+Install Directory=
 Runtime=Host System
 
 [Project]
