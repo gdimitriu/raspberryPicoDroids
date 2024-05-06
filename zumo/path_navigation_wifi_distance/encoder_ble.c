@@ -92,10 +92,14 @@ int main() {
     pwm_config_set_clkdiv(&config, 4.f);
     // Load the configuration into our PWM slice, and set it running.
     pwm_init(slice_num, &config, true);
+	gpio_init(leftMotorEncoder);
+    gpio_set_dir(leftMotorEncoder, GPIO_IN);
+    gpio_pull_down(leftMotorEncoder);
 	gpio_set_irq_enabled_with_callback(leftMotorEncoder, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
+	gpio_init(rightMotorEncoder);
+    gpio_set_dir(rightMotorEncoder, GPIO_IN);
+    gpio_pull_down(rightMotorEncoder);
 	gpio_set_irq_enabled_with_callback(rightMotorEncoder, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-	gpio_set_irq_enabled_with_callback(frontSensorPin, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-	gpio_set_irq_enabled_with_callback(backSensorPin, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 	//read from external EEPROM configuration
 	//update configuration
 	computePPI();

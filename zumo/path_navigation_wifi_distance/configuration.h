@@ -64,9 +64,6 @@
 	extern float rightPPI;
 	extern long countRotate90Left;
 	extern long countRotate90Right;
-	//sensors
-	extern unsigned int frontSensorPin;
-	extern unsigned int backSensorPin;
 	
 	//commands
 	extern string_list_node *commandsStartPoint;
@@ -78,7 +75,6 @@
 	#define ECHO_PIN 21
 	#define TRIG_PIN 20
 	#define STOP_DISTANCE 50
-	extern volatile bool hasColisionObject;	
 /*	
 	 * structure for the TCP server
  */

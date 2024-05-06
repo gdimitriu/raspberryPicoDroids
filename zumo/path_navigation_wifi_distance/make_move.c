@@ -35,26 +35,22 @@
 /*
  * engine settings
  */
-float whellRadius = 3.25;
+float whellRadius = 2.00;
 const float pi = 3.14f;
 //left engine
 unsigned int leftMotorPin1 = 15;
 unsigned int leftMotorPin2 = 14;
 unsigned int leftMotorEncoder = 16;
-long leftResolutionCodor = 20;
+long leftResolutionCodor = 1452;
 float leftPPI;
 //right engine
 unsigned int rightMotorPin1 = 10;
 unsigned int rightMotorPin2 = 11;
 unsigned int rightMotorEncoder = 17;
-long rightResolutionCodor = 20;
+long rightResolutionCodor = 1468;
 float rightPPI;
-long countRotate90Left= 8;
-long countRotate90Right= 8;
-
-//sensors
-unsigned int frontSensorPin = 13;
-unsigned int backSensorPin = 12;
+long countRotate90Left= 841;
+long countRotate90Right= 830;
 
 string_list_node *commandsStartPoint;
 string_list_node *commandsEndPoint;

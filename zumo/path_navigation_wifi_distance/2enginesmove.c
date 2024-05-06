@@ -33,8 +33,6 @@ static volatile unsigned long leftCounts;
 static volatile float leftCurrentDistance = 0.0f; 
 static volatile unsigned long rightCounts;
 static volatile float rightCurrentDistance = 0.0f;
-static volatile bool frontSensorDetect = false;
-static volatile bool backSensorDetect = false;
 static int humanCommandDirection = 0;
 static bool humanCommand = false;
 
@@ -61,32 +59,6 @@ void gpio_callback(uint gpio, uint32_t events) {
 				leftCounts++;
 			} else if (gpio == rightMotorEncoder) {
 				rightCounts++;
-			} else if (gpio == frontSensorPin) {
-				frontSensorDetect = false;
-			} else if (gpio == backSensorPin) {
-				backSensorDetect = false;
-			}
-		} else if (GPIO_IRQ_EDGE_FALL == events) {
-			if (gpio == frontSensorPin) {
-				frontSensorDetect = true;
-			} else if (gpio == backSensorPin) {
-				backSensorDetect = true;
-			}
-		}
-	} else {
-		if (GPIO_IRQ_EDGE_FALL == events) {
-			if (gpio == frontSensorPin && humanCommandDirection > 0) {
-				go(0,0);
-				frontSensorDetect = true;
-			} else if (gpio == backSensorPin && humanCommandDirection < 0) {
-				go(0,0);
-				backSensorDetect = true;
-			}
-		} else if (GPIO_IRQ_EDGE_RISE == events) {
-			if (gpio == frontSensorPin) {
-				frontSensorDetect = false;
-			} else if (gpio == backSensorPin) {
-				backSensorDetect = false;
 			}
 		}
 	}
@@ -119,29 +91,7 @@ void go(int speedLeft, int speedRight) {
 #endif
 		return;
 	}
-	
-	if (speedLeft > 0 && speedRight > 0 && frontSensorDetect) {
-		pwm_set_gpio_level(leftMotorPin1,LOW);
-		pwm_set_gpio_level(leftMotorPin2,LOW);
-		pwm_set_gpio_level(rightMotorPin1,LOW);
-		pwm_set_gpio_level(rightMotorPin2,LOW);
-#ifdef SERIAL_DEBUG_MODE    
-		printf("All on zero because collision in front\n");
-#endif
-		return;
-	}
-	
-	if (speedLeft < 0 && speedRight < 0 && backSensorDetect) {
-		pwm_set_gpio_level(leftMotorPin1,LOW);
-		pwm_set_gpio_level(leftMotorPin2,LOW);
-		pwm_set_gpio_level(rightMotorPin1,LOW);
-		pwm_set_gpio_level(rightMotorPin2,LOW);
-#ifdef SERIAL_DEBUG_MODE    
-		printf("All on zero because collision in back\n");
-#endif
-		return;
-	}
-	
+
 	if (speedLeft > 0) {
 		pwm_set_gpio_level(leftMotorPin1, speedLeft);
 		pwm_set_gpio_level(leftMotorPin2, 0);
@@ -197,18 +147,7 @@ static void moveWithDistance(float moveData) {
 		go(0,0);
 		return;
 	}
-	while ( !stopLeft || !stopRight){
-		if (moveData > 0 ) {
-			if (frontSensorDetect) {
-				stopLeft = true;
-				stopRight = true;
-			}
-		} else {
-			if (backSensorDetect) {
-				stopLeft = true;
-				stopRight = true;
-			}
-		}
+	while ( !stopLeft || !stopRight){		
 		if (!stopLeft) {
 			leftCurrentDistance = leftCounts / leftPPI;
 			if ((distance - leftCurrentDistance) <= 0.02) {
