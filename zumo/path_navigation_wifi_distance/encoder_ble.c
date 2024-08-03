@@ -29,12 +29,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pico/cyw43_arch.h>
+#include <pico/multicore.h>
 
 #include "2enginesmove.h"
 #include "configuration.h"
 #include "string_list.h"
 #include "make_move.h"
 #include "server_wifi.h"
+#include "moving-sensor_ultrasonics.h"
 
 
 int absoluteMaxPower = 65025;
@@ -51,6 +53,12 @@ void computePPI() {
 	rightPPI = rightResolutionCodor/(2*pi*whellRadius);
 }
 
+void core1_entry() {
+	while(1) {
+		updateDistance();
+	}
+}
+
 int main() {
 	stdio_usb_init();
 	//initialize UART 1
@@ -63,6 +71,7 @@ int main() {
 	printf("Starting...\n");
 	fflush(stdout);
 #endif
+	multicore_reset_core1();
 	gpio_set_function(leftMotorPin1, GPIO_FUNC_PWM);
 	// Figure out which slice we just connected
     uint slice_num = pwm_gpio_to_slice_num(leftMotorPin1);
@@ -104,9 +113,11 @@ int main() {
 	//update configuration
 	computePPI();
 	commandsStartPoint = commandsCurrentPoint = NULL;
+	initServoUltrasonics();
+	moveServo(90);	
+	multicore_launch_core1(core1_entry);
 	
 #ifdef SERIAL_DEBUG_MODE	
-	getchar();
 	printf("Started\n");
 	fflush(stdout);
 #endif

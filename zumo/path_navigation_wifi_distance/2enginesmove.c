@@ -28,6 +28,7 @@
 #include <pico/printf.h>
 #include "2enginesmove.h"
 #include "configuration.h"
+#include "moving-sensor_ultrasonics.h"
 
 static volatile unsigned long leftCounts;
 static volatile float leftCurrentDistance = 0.0f; 
@@ -134,6 +135,13 @@ static void stopRightEngine() {
 }
 
 static void moveWithDistance(float moveData) {
+	moveServo(90);
+	if ( moveData > 0 && hasCollision() ) {
+#ifdef SERIAL_DEBUG_MODE
+		printf("Stop as distance in front %ld is less than %d\n", getDistance(), stopDistance);
+#endif		
+		return;
+	}
 	bool stopLeft = false;
 	bool stopRight = false;
 	float distance;
@@ -147,7 +155,13 @@ static void moveWithDistance(float moveData) {
 		go(0,0);
 		return;
 	}
-	while ( !stopLeft || !stopRight){		
+	while ( !stopLeft || !stopRight) {
+		if ( moveData > 0 && hasCollision() ) {
+			stopLeftEngine();
+			stopRightEngine();
+			stopLeft = true;
+			stopRight = true;
+		}
 		if (!stopLeft) {
 			leftCurrentDistance = leftCounts / leftPPI;
 			if ((distance - leftCurrentDistance) <= 0.02) {
@@ -169,8 +183,9 @@ static void moveWithDistance(float moveData) {
 }
 
 static void rotate90Left() {
+	moveServo(180);
 	bool stopLeft = false;
-	bool stopRight = false;
+	bool stopRight = false;	
 #ifdef SERIAL_DEBUG_MODE
 	printf("Rotate 90 left with left=%ld and right=%ld\r\n", countRotate90Left, countRotate90Right);
 #endif	
@@ -190,9 +205,11 @@ static void rotate90Left() {
 		}
 	}
 	go(0,0);
+	moveServo(90);
 }
 
 static void rotate90Right() {
+	moveServo(0);
 	bool stopLeft = false;
 	bool stopRight = false;
 #ifdef SERIAL_DEBUG_MODE
@@ -215,9 +232,12 @@ static void rotate90Right() {
 		}
 	}
 	go(0,0);
+	moveServo(90);
 }
 
 static void rotateLeftDegree(int nr) {
+	if ( (nr >= 0 && nr < 180) || ( nr <= 0 && nr > -180) )
+		moveServo(nr);
 	bool stopLeft = false;
 	bool stopRight = false;
 	long int leftTargetCounts = countRotate90Left*nr/90;
@@ -241,9 +261,12 @@ static void rotateLeftDegree(int nr) {
 		}
 	}
 	go(0,0);
+	moveServo(90);
 }
 
 static void rotateRightDegree(int nr) {
+	if ( (nr >= 0 && nr < 180) || ( nr <= 0 && nr > -180) )
+		moveServo(nr);
 	bool stopLeft = false;
 	bool stopRight = false;
 	long int leftTargetCounts = countRotate90Left*nr/90;
@@ -267,6 +290,7 @@ static void rotateRightDegree(int nr) {
 		}
 	}
 	go(0,0);
+	moveServo(90);
 }
 
 void clearEncoders() {

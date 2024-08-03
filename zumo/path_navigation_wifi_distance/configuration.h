@@ -45,6 +45,8 @@
 	extern int maxPower;
 	extern int currentPower;
 	extern int minPower;
+	extern int lowPowerDistance;
+	extern int stopDistance;
 	/*
 	 * engine settings
 	 */
@@ -62,8 +64,8 @@
 	extern unsigned int rightMotorEncoder;
 	extern long rightResolutionCodor;
 	extern float rightPPI;
-	extern long countRotate90Left;
-	extern long countRotate90Right;
+	extern unsigned long countRotate90Left;
+	extern unsigned long countRotate90Right;
 	
 	//commands
 	extern string_list_node *commandsStartPoint;
@@ -71,10 +73,11 @@
 	
 	//servo
 	#define SERVO_PIN 22
-	//HC-SR-4
+	//HC-SR-4 or IOE-SR05
 	#define ECHO_PIN 21
 	#define TRIG_PIN 20
-	#define STOP_DISTANCE 50
+	//IOE-SR05
+	#define MAX_RANGE_SENSOR 200
 /*	
 	 * structure for the TCP server
  */
@@ -90,7 +93,7 @@ typedef struct TCP_SERVER_T_ {
     int recv_len;
 } TCP_SERVER_T;
 	
-	#define SERIAL_DEBUG_MODE true
+#define SERIAL_DEBUG_MODE true
 
 //	#define TEST_COMMANDS true
 #ifdef TEST_COMMANDS

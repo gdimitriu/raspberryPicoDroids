@@ -1,16 +1,16 @@
 /*
- * moving-sensor_hc-sr04.c
+ * moving-sensor_ioe_sr05.c
  *
- *  Created on: Jan 30, 2024
+ *  Created on: August 2, 2024
  *      Author: Gabriel Dimitriu 2024
  */
 
-#include <pico/time.h>
 #include <hardware/pwm.h>
 #include <hardware/gpio.h>
 #include <inttypes.h>
 #include <pico/mutex.h>
-
+#include "uart_rx.pio.h"
+#include <hardware/pio.h>
 #include "moving-sensor_ultrasonics.h"
 
 #define SERVO_180 3200
@@ -20,10 +20,11 @@
 #define SERVO_0 500
 
 static mutex_t distanceMutex;
-static volatile long currentDistance = 450;
+static volatile long currentDistance = MAX_RANGE_SENSOR;
 int stopDistance = 5;
 int lowPowerDistance = 25; 
-
+static PIO pio = pio0;
+static uint sm = 0;
 static void setMillis(float millis) {
 	pwm_set_gpio_level(SERVO_PIN, (millis/20000.f)*29062.f);
 }
@@ -36,6 +37,9 @@ static void setServoMillis(float startMillis) {
 	pwm_config_set_wrap(&config, 29062.f);
 	pwm_init(slice_num, &config, true);
 	setMillis(startMillis);
+	gpio_init(TRIG_PIN);
+    gpio_set_dir(TRIG_PIN, GPIO_OUT);
+	gpio_put(TRIG_PIN, true);
 }
 
 void initServoUltrasonics() {
@@ -46,6 +50,9 @@ void initServoUltrasonics() {
 	gpio_set_dir(ECHO_PIN, GPIO_IN);
 	gpio_pull_up(ECHO_PIN);
 	mutex_init(&distanceMutex);
+	// Set up the state machine we're going to use to receive them.
+    uint offset = pio_add_program(pio, &uart_rx_program);
+    uart_rx_program_init(pio, sm, offset, ECHO_PIN, 9600);
 }
 
 
@@ -80,28 +87,33 @@ long getDistance() {
 }
 
 void updateDistance() {
-	long distance = 450;
-	bool timeoutOccured = false;
-	uint64_t start;
+	uint8_t S_DATA = 0;
+	uint8_t H_DATA = 0;
+	uint8_t L_DATA = 0;
+	uint8_t SUM = 0;
+
+	uint16_t distance = 0;
 	gpio_put(TRIG_PIN, false);
-	busy_wait_us(2);
+	S_DATA = uart_rx_program_getc(pio, sm);
+	if ( S_DATA == 0xFF ) {
+		H_DATA = uart_rx_program_getc(pio, sm);
+		L_DATA = uart_rx_program_getc(pio, sm);
+		SUM = uart_rx_program_getc(pio, sm);
+	}
 	gpio_put(TRIG_PIN, true);
-	busy_wait_us(10);
-	gpio_put(TRIG_PIN, false);			
-	while(gpio_get(ECHO_PIN) == false);
-	start = time_us_64();
-	while(gpio_get(ECHO_PIN) == true) {
-		if ((time_us_64() - start) > 26190) {
-			timeoutOccured = true;
-			break;
+	if ( S_DATA == 0xFF && H_DATA == 0xAA && L_DATA == 0xAA && SUM == 53 ) {
+		distance = MAX_RANGE_SENSOR;
+	} else {		
+		uint16_t sum = S_DATA + H_DATA + L_DATA;
+		sum = sum << 8;
+		sum = sum >> 8; 
+		if ( SUM == sum ) {
+			distance = H_DATA * 256  +  L_DATA;
 		}
 	}
-	if (timeoutOccured == false) {				
-		int64_t microseconds = time_us_64() - start;
-		distance = ((microseconds/2)/29.1); //cm
-	}
+	//divide by 10 to be cm
 	mutex_enter_blocking(&distanceMutex);
-	currentDistance = distance;
+	currentDistance = distance/10;
 	mutex_exit(&distanceMutex);
 }
 

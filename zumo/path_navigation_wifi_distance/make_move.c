@@ -49,8 +49,8 @@ unsigned int rightMotorPin2 = 11;
 unsigned int rightMotorEncoder = 17;
 long rightResolutionCodor = 1468;
 float rightPPI;
-long countRotate90Left= 841;
-long countRotate90Right= 830;
+unsigned long countRotate90Left= 841;
+unsigned long countRotate90Right= 830;
 
 string_list_node *commandsStartPoint;
 string_list_node *commandsEndPoint;
@@ -97,6 +97,30 @@ static void sendMaxPower() {
 	sendData(bufferSend);
 }
 
+/*
+ * send low power distance
+ */
+
+static void sendLowPowerDistance() {
+#ifdef SERIAL_DEBUG_MODE
+	printf("%d\n\r",lowPowerDistance);
+#endif
+	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
+	sprintf(bufferSend,"%d\r\n",lowPowerDistance);
+	sendData(bufferSend);
+}
+
+/*
+ * send stop distance
+ */
+static void sendStopDistance() {
+#ifdef SERIAL_DEBUG_MODE
+	printf("%d\n\r",stopDistance);
+#endif
+	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
+	sprintf(bufferSend,"%d\r\n",stopDistance);
+	sendData(bufferSend);
+}
 /*
  * send minimum power setting
  */
@@ -259,14 +283,14 @@ static bool commandWithoutData() {
 	 * return minimum low power distance
 	 */
 	else if (bufferReceive[0] == 'd') {
-		sendUnsupported();
+		sendLowPowerDistance();
 		isValidInput = true;
 	}
 	/*
 	 * return stop distance
 	 */
 	else if (bufferReceive[0] == 's') {
-		sendUnsupported();
+		sendStopDistance();
 		isValidInput = true;
 	}
 	/*
@@ -373,6 +397,64 @@ static bool setMinimumPower() {
 	printf("MinPower=%s\n",bufferReceive);
 #endif                
 	minPower = atol(bufferReceive);
+	isValidInput = true;
+	return true;
+}
+
+/*
+ * set lowPowerDistance
+ */
+static bool setLowPowerDistance() {
+	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
+	sprintf(bufferSend,"OK\r\n");
+	sendData(bufferSend);
+	//remove v from command
+	for (uint8_t i = 0 ; i < strlen(bufferReceive); i++) {
+		bufferReceive[i]=bufferReceive[i+1];
+	}
+	if (!isValidNumber(bufferReceive, bufferIndex - 2)) {
+		isValidInput = false;
+		//do not makeCleanup();
+		return false;
+	}
+	if (atol(bufferReceive) > maxPower || atol(bufferReceive) < 0) {
+		isValidInput = false;
+		//do not makeCleanup();
+		return false;
+	}
+#ifdef SERIAL_DEBUG_MODE
+	printf("LowPowerDistance=%s\n",bufferReceive);
+#endif                
+	lowPowerDistance = atol(bufferReceive);
+	isValidInput = true;
+	return true;
+}
+
+/*
+ * set stopDistance
+ */
+static bool setStopDistance() {
+	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
+	sprintf(bufferSend,"OK\r\n");
+	sendData(bufferSend);
+	//remove v from command
+	for (uint8_t i = 0 ; i < strlen(bufferReceive); i++) {
+		bufferReceive[i]=bufferReceive[i+1];
+	}
+	if (!isValidNumber(bufferReceive, bufferIndex - 2)) {
+		isValidInput = false;
+		//do not makeCleanup();
+		return false;
+	}
+	if (atol(bufferReceive) > maxPower || atol(bufferReceive) < 0) {
+		isValidInput = false;
+		//do not makeCleanup();
+		return false;
+	}
+#ifdef SERIAL_DEBUG_MODE
+	printf("StopDistance=%s\n",bufferReceive);
+#endif                
+	stopDistance = atol(bufferReceive);
 	isValidInput = true;
 	return true;
 }
@@ -567,7 +649,7 @@ static bool commandWithData(bool isHuman, int isReverse) {
 	 * set the low power distance value
 	 */
 	else if (bufferReceive[0] == 'd') {
-		sendUnsupported();
+		setLowPowerDistance();
 		isValidInput = true;
 		return true;
 	}
@@ -575,7 +657,7 @@ static bool commandWithData(bool isHuman, int isReverse) {
 	 * set the stop distance value
 	 */
 	else if (bufferReceive[0] == 's') {
-		sendUnsupported();
+		setStopDistance();
 		isValidInput = true;
 		return true;
 	}
