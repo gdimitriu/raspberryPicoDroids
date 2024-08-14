@@ -1,7 +1,7 @@
 /*
  * moving robot raspberry pico w (WIFI based)
  * 
- * encoder_ble.c (main entry point)
+ * main_entry_wifi.c (main entry point)
  * 
  * Copyright 2024 Gabriel Dimitriu
  *
@@ -31,13 +31,12 @@
 #include <pico/cyw43_arch.h>
 #include <pico/multicore.h>
 
-#include "2enginesmove.h"
 #include "configuration.h"
 #include "string_list.h"
 #include "make_move.h"
 #include "server_wifi.h"
 #include "moving-sensor_ultrasonics.h"
-
+#include "move_encoder.h"
 
 int absoluteMaxPower = 65025;
 int maxPower = 65025;
@@ -112,7 +111,6 @@ int main() {
 	//read from external EEPROM configuration
 	//update configuration
 	computePPI();
-	commandsStartPoint = commandsCurrentPoint = NULL;
 	initServoUltrasonics();
 	moveServo(90);	
 	multicore_launch_core1(core1_entry);

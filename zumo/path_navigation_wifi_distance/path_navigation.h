@@ -1,7 +1,7 @@
 /*
  * moving robot raspberry pico w (WIFI based)
  * 
- * 2enginesmove.h (actual driving the engines)
+ * path_navigation.h
  * 
  * Copyright 2024 Gabriel Dimitriu
  *
@@ -21,28 +21,27 @@
  * along with raspberryPicoDroids; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 */
-#ifndef _2ENGINESMOVE_H_
-#define _2ENGINESMOVE_H_
 
-	/**
-	 * break the engines
-	 */
-	void breakEngines();
+#ifndef _PATH_NAVIGATION_H_
+#define _PATH_NAVIGATION_H_
 	
 	/**
-	 * move with different speed on each engine
-	 * @param speedLeft left engine power
-	 * @param sppedRight right engine power
+	 * move to distance or rotate
+	 * @param moveData distance in cm to move negative for backward
+	 * @param rotateData rotate -1 to 90 left, 1 to right, negative values are left, positive values are right
+	 * @param autoServo true if the move will move the servo
 	 */
-	void go(int speedLeft, int speedRight);
+	void moveOrRotateWithDistance(float moveData, int rotateData, bool autoServo);
+	/**
+	 * set the human direction
+	 * value > 0 forward
+	 * value < 0 backward
+	 */
+	void setHumanDirection(int value);
 	
 	/**
-	 * stop the left engine
+	 * set that a human command this using droidControl center or something else
+	 * isHuman true if is human on controll (M command)
 	 */
-	void stopLeftEngine();
-	
-	/**
-	 * stop the right engine
-	 */
-	void stopRightEngine();
-#endif //_2ENGINES_MOVE_H_
+	void setHumanCommand(bool isHuman);
+#endif

@@ -26,35 +26,14 @@
 #include <pico/printf.h>
 #include <string.h>
 #include <stdlib.h>
-#include "2enginesmove.h"
+
 #include "configuration.h"
-#include "string_list.h"
 #include "server_wifi.h"
 #include "make_move.h"
-
-/*
- * engine settings
- */
-float whellRadius = 2.00;
-const float pi = 3.14f;
-//left engine
-unsigned int leftMotorPin1 = 15;
-unsigned int leftMotorPin2 = 14;
-unsigned int leftMotorEncoder = 16;
-long leftResolutionCodor = 1452;
-float leftPPI;
-//right engine
-unsigned int rightMotorPin1 = 10;
-unsigned int rightMotorPin2 = 11;
-unsigned int rightMotorEncoder = 17;
-long rightResolutionCodor = 1468;
-float rightPPI;
-unsigned long countRotate90Left= 841;
-unsigned long countRotate90Right= 830;
-
-string_list_node *commandsStartPoint;
-string_list_node *commandsEndPoint;
-string_list_node *commandsCurrentPoint;
+#include "2enginesmove.h"
+#include "path_navigation.h"
+#include "move_commands.h"
+#include "move_encoder.h"
 
 bool isValidInput = false;
 
@@ -147,6 +126,7 @@ static void sendCurrentPower() {
 	sendData(bufferSend);
 }
 
+
 /*
  * send encoder values
  */
@@ -167,92 +147,6 @@ static void resetEncoders() {
 	sendData(bufferSend);
 	//reset counters
 	clearEncoders();
-}
-
-static void moveWithCommandsInDirectOrder() {
-	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
-	sprintf(bufferSend,"OK\r\n");
-	sendData(bufferSend);
-	commandsCurrentPoint = commandsStartPoint;
-	while ( commandsCurrentPoint != NULL ) {
-		memset(bufferReceive, '\0', sizeof(char)*WIFI_BUFFER);
-		bufferIndex = strlen(commandsCurrentPoint->data) + 1;
-		strncpy(bufferReceive, commandsCurrentPoint->data, strlen(commandsCurrentPoint->data));
-		makeMove(false, 0);
-		commandsCurrentPoint = getNext(commandsCurrentPoint);				
-	}
-}
-
-static void moveWithCommandsInReverseOrder() {
-	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
-	sprintf(bufferSend,"OK\r\n");
-	sendData(bufferSend);
-	//change the power
-	int previousPower = currentPower;
-	currentPower /= 2;
-	if ( currentPower < minPower ) {
-		currentPower = minPower;
-	}
-	//rotate 180 degree
-	memset(bufferReceive, '\0', sizeof(char)*WIFI_BUFFER);
-	strncpy(bufferReceive, "m0,1", 4);
-	bufferIndex = 5;
-	makeMove(false, 0);
-	memset(bufferReceive, '\0', sizeof(char)*WIFI_BUFFER);
-	strncpy(bufferReceive, "m0,1", 4);
-	bufferIndex = 5;
-	makeMove(false, 0);
-	currentPower = previousPower;
-	commandsCurrentPoint = commandsEndPoint;
-	while ( commandsCurrentPoint != NULL ) {
-		memset(bufferReceive, '\0', sizeof(char)*WIFI_BUFFER);
-		bufferIndex = strlen(commandsCurrentPoint->data) + 1;
-		strncpy(bufferReceive, commandsCurrentPoint->data, strlen(commandsCurrentPoint->data));
-		makeMove(false, 1);
-		commandsCurrentPoint = getPrevious(commandsCurrentPoint);
-	}
-	//change the power
-	previousPower = currentPower;
-	currentPower /= 2;
-	if ( currentPower < minPower ) {
-		currentPower = minPower;
-	}
-	//rotate 180 degree
-	memset(bufferReceive, '\0', sizeof(char)*WIFI_BUFFER);
-	strncpy(bufferReceive, "m0,1", 4);
-	bufferIndex = 5;
-	makeMove(false, 0);
-	memset(bufferReceive, '\0', sizeof(char)*WIFI_BUFFER);
-	strncpy(bufferReceive, "m0,1", 4);
-	bufferIndex = 5;
-	makeMove(false, 0);
-	currentPower = previousPower;
-}
-
-static bool clearCommandList() {
-	if ( commandsCurrentPoint == NULL ) {
-		memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
-		sprintf(bufferSend,"OK\r\n");
-		sendData(bufferSend);
-		return true;
-	}
-	commandsCurrentPoint = commandsStartPoint;
-	commandsStartPoint = commandsStartPoint -> next;
-	while ( commandsCurrentPoint != NULL ) {				
-		if ( commandsCurrentPoint -> data != NULL ) {
-			free(commandsCurrentPoint->data);
-		}
-		free(commandsCurrentPoint);
-		commandsCurrentPoint = commandsStartPoint;
-		if ( commandsStartPoint != NULL ) {
-			commandsStartPoint = commandsStartPoint -> next;
-		}
-	}
-	commandsCurrentPoint = commandsStartPoint = commandsEndPoint = NULL;
-	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
-	sprintf(bufferSend,"OK\r\n");
-	sendData(bufferSend);
-	return true;
 }
 
 static bool commandWithoutData() {
@@ -591,40 +485,12 @@ static bool moveOrRotateByValue(int isReverse) {
 	if (moveData == 0 && rotateData == 0) {
 		go(0,0);
 	} else {
-		moveOrRotateWithDistance(moveData,rotateData);
+		moveOrRotateWithDistance(moveData,rotateData, true);
 	}
 	isValidInput = true;
 	return true;
 }
 
-/*
- * put path value
- */
-static bool putPathValue() {
-	//remove N from command
-	for (uint8_t i = 0 ; i < strlen(bufferReceive); i++) {
-		bufferReceive[i]=bufferReceive[i+1];
-	}
-	bufferReceive[strlen(bufferReceive)] = '\0';
-	if ( commandsCurrentPoint == NULL ) {
-		commandsCurrentPoint = commandsStartPoint = allocate();
-	} else {
-		string_list_node *node = allocate();
-		node->previous = commandsCurrentPoint;
-		commandsCurrentPoint->next = node;
-		commandsCurrentPoint = node;
-	}
-	commandsCurrentPoint->data = calloc(strlen(bufferReceive) + 1, sizeof(char));
-#ifdef SERIAL_DEBUG_MODE
-	printf("Added command: %s\n",bufferReceive);
-#endif			
-	strncpy(commandsCurrentPoint->data, bufferReceive, strlen(bufferReceive));
-	commandsEndPoint = commandsCurrentPoint;
-	memset(bufferSend,'\0',sizeof(char)*WIFI_BUFFER_SEND);
-	sprintf(bufferSend,"OK\r\n");
-	sendData(bufferSend);
-	return true;
-}
 
 static bool commandWithData(bool isHuman, int isReverse) {
 	/*
@@ -677,7 +543,7 @@ static bool commandWithData(bool isHuman, int isReverse) {
 	 * put values into the navigation path
 	 */
 	else if ( bufferReceive[0] == 'N' ) {
-		return putPathValue();
+		return putCommand();
 	}
 	/*
 	 * command unknown

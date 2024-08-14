@@ -26,16 +26,16 @@
 
 #include <pico/stdlib.h>
 
-struct node {
-	struct node *previous;
-	struct node *next;
+struct string_node {
+	struct string_node *previous;
+	struct string_node *next;
 	char *data;
 };
-typedef struct node string_list_node;
-string_list_node * allocate(void);
-string_list_node *getNext(string_list_node *theNode);
-string_list_node *getPrevious(string_list_node *theNode);
-bool isAtBeginig(string_list_node *theNode);
-bool isAtEnd(string_list_node *theNode);
+typedef struct string_node string_list_node;
+string_list_node * allocateStringNode(void);
+string_list_node *getNextStringNode(string_list_node *theNode);
+string_list_node *getPreviousStringNode(string_list_node *theNode);
+bool isAtBeginigStringList(string_list_node *theNode);
+bool isAtEndStringList(string_list_node *theNode);
 
 #endif

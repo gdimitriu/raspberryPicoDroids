@@ -12,7 +12,11 @@ project(path_navigation_wifi_distance)
 pico_sdk_init()
 if (TARGET tinyusb_device)
 	add_executable(path_navigation_wifi_distance
-        encoder_ble.c 2enginesmove.c string_list.c server_wifi.c make_move.c moving-sensor_ioe_sr05.c
+        main_entry_wifi.c server_wifi.c make_move.c
+        2enginesmove.c move_encoder.c
+        move_commands.c string_list.c
+        moving-sensor_ioe_sr05.c
+        path_navigation.c move_list.c
         )
 	target_compile_definitions(path_navigation_wifi_distance PRIVATE
         WIFI_SSID=\"$ENV{WIFI_SSID}\"

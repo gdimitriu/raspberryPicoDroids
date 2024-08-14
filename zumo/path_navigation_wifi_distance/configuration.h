@@ -24,8 +24,6 @@
 #ifndef _CONFIGURATION_H_
 #define _CONFIGURATION_H_
 
-	#include "string_list.h"
-	
 	#define WIFI_BUFFER 512
 	#define WIFI_BUFFER_SEND 512
 	
@@ -66,10 +64,6 @@
 	extern float rightPPI;
 	extern unsigned long countRotate90Left;
 	extern unsigned long countRotate90Right;
-	
-	//commands
-	extern string_list_node *commandsStartPoint;
-	extern string_list_node *commandsCurrentPoint;
 	
 	//servo
 	#define SERVO_PIN 22

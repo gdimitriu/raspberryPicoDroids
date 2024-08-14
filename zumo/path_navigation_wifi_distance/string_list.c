@@ -24,7 +24,7 @@
 #include "string_list.h"
 #include <stdlib.h>
 
-string_list_node *allocate(void) {
+string_list_node *allocateStringNode(void) {
 	string_list_node * theNode;
 	theNode = calloc(1, sizeof(string_list_node));
 	theNode-> next = NULL;
@@ -33,21 +33,21 @@ string_list_node *allocate(void) {
 	return theNode;
 }
 
-string_list_node *getNext(string_list_node *theNode) {
+string_list_node *getNextStringNode(string_list_node *theNode) {
 	return theNode->next;
 }
 
-string_list_node *getPrevious(string_list_node *theNode) {
+string_list_node *getPreviousStringNode(string_list_node *theNode) {
 	return theNode->previous;
 }
 
-bool isAtBeginig(string_list_node *theNode) {
+bool isAtBeginigStringList(string_list_node *theNode) {
 	if ( theNode->previous == NULL )
 		return true;
 	return false;
 }
 
-bool isAtEnd(string_list_node *theNode) {
+bool isAtEndStringList(string_list_node *theNode) {
 	if ( theNode->next == NULL ) 
 		return true;
 	return false;

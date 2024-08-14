@@ -21,49 +21,28 @@
  * along with raspberryPicoDroids; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 */
+
 #include <math.h>
-#include <pico/stdlib.h>
 #include <hardware/gpio.h>
 #include <hardware/pwm.h>
 #include <pico/printf.h>
 #include "2enginesmove.h"
 #include "configuration.h"
-#include "moving-sensor_ultrasonics.h"
 
-static volatile unsigned long leftCounts;
-static volatile float leftCurrentDistance = 0.0f; 
-static volatile unsigned long rightCounts;
-static volatile float rightCurrentDistance = 0.0f;
-static int humanCommandDirection = 0;
-static bool humanCommand = false;
 
-void setHumanCommand(bool isHuman) {
-	humanCommand = isHuman;
-}
+/*
+ * engine settings
+ */
 
-void setHumanDirection(int value) {
-	humanCommandDirection = value;
-}
+//left engine
+unsigned int leftMotorPin1 = 15;
+unsigned int leftMotorPin2 = 14;
+unsigned int leftMotorEncoder = 16;
 
-unsigned long getLeftEngineCounts() {
-	return leftCounts;
-}
-
-unsigned long getRightEngineCounts() {
-	return rightCounts;
-}
-
-void gpio_callback(uint gpio, uint32_t events) {
-	if (!humanCommand) {
-		if (GPIO_IRQ_EDGE_RISE == events) {
-			if (gpio == leftMotorEncoder) {
-				leftCounts++;
-			} else if (gpio == rightMotorEncoder) {
-				rightCounts++;
-			}
-		}
-	}
-}
+//right engine
+unsigned int rightMotorPin1 = 10;
+unsigned int rightMotorPin2 = 11;
+unsigned int rightMotorEncoder = 17;
 
 void breakEngines() {
 	pwm_set_gpio_level(leftMotorPin1,absoluteMaxPower);
@@ -124,219 +103,13 @@ void go(int speedLeft, int speedRight) {
 	}
 }
 
-static void stopLeftEngine() {
+void stopLeftEngine() {
 	pwm_set_gpio_level(leftMotorPin1,LOW);
 	pwm_set_gpio_level(leftMotorPin2,LOW);
 }
 
-static void stopRightEngine() {
+void stopRightEngine() {
 	pwm_set_gpio_level(rightMotorPin1,LOW);
 	pwm_set_gpio_level(rightMotorPin2,LOW);
 }
 
-static void moveWithDistance(float moveData) {
-	moveServo(90);
-	if ( moveData > 0 && hasCollision() ) {
-#ifdef SERIAL_DEBUG_MODE
-		printf("Stop as distance in front %ld is less than %d\n", getDistance(), stopDistance);
-#endif		
-		return;
-	}
-	bool stopLeft = false;
-	bool stopRight = false;
-	float distance;
-	if (moveData > 0) {
-		distance = moveData;
-		go(currentPower,currentPower);
-	} else if (moveData < 0) {
-		distance = - moveData;
-		go(-currentPower,-currentPower);
-	} else {
-		go(0,0);
-		return;
-	}
-	while ( !stopLeft || !stopRight) {
-		if ( moveData > 0 && hasCollision() ) {
-			stopLeftEngine();
-			stopRightEngine();
-			stopLeft = true;
-			stopRight = true;
-		}
-		if (!stopLeft) {
-			leftCurrentDistance = leftCounts / leftPPI;
-			if ((distance - leftCurrentDistance) <= 0.02) {
-				stopLeftEngine();
-				stopLeft = true;
-			}
-		}
-		if (!stopRight) {
-			rightCurrentDistance = rightCounts / rightPPI;
-			if ((distance - rightCurrentDistance) <= 0.02) {
-				stopRightEngine();
-				stopRight = true;
-			}
-		}
-	}
-	go(0,0);
-	leftCurrentDistance = 0;
-	rightCurrentDistance = 0;
-}
-
-static void rotate90Left() {
-	moveServo(180);
-	bool stopLeft = false;
-	bool stopRight = false;	
-#ifdef SERIAL_DEBUG_MODE
-	printf("Rotate 90 left with left=%ld and right=%ld\r\n", countRotate90Left, countRotate90Right);
-#endif	
-	go(-currentPower,currentPower);
-	while ( !stopLeft || !stopRight){
-		if (!stopLeft) {
-			if (leftCounts >= countRotate90Left) {
-				stopLeftEngine();
-				stopLeft = true;
-			}
-		}
-		if (!stopRight) {
-			if (rightCounts >= countRotate90Right) {
-				stopRightEngine();
-				stopRight = true;
-			}
-		}
-	}
-	go(0,0);
-	moveServo(90);
-}
-
-static void rotate90Right() {
-	moveServo(0);
-	bool stopLeft = false;
-	bool stopRight = false;
-#ifdef SERIAL_DEBUG_MODE
-	printf("Rotate 90 right with left=%ld and right=%ld\r\n", countRotate90Left, countRotate90Right);
-#endif	
-	
-	go(currentPower,-currentPower);
-	while ( !stopLeft || !stopRight){
-		if (!stopLeft) {
-			if (leftCounts >= countRotate90Left) {
-				stopLeftEngine();
-				stopLeft = true;
-			}
-		}
-		if (!stopRight) {
-			if (rightCounts >= countRotate90Right) {
-				stopRightEngine();
-				stopRight = true;
-			}
-		}
-	}
-	go(0,0);
-	moveServo(90);
-}
-
-static void rotateLeftDegree(int nr) {
-	if ( (nr >= 0 && nr < 180) || ( nr <= 0 && nr > -180) )
-		moveServo(nr);
-	bool stopLeft = false;
-	bool stopRight = false;
-	long int leftTargetCounts = countRotate90Left*nr/90;
-	long int rightTargetCounts = countRotate90Right*nr/90;
-#ifdef SERIAL_DEBUG_MODE
-	printf("Rotate %d left with left=%ld and right=%ld\r\n", nr, leftTargetCounts, rightTargetCounts);
-#endif		
-	go(-currentPower,currentPower);
-	while ( !stopLeft || !stopRight){
-		if (!stopLeft) {
-			if (leftCounts >= leftTargetCounts) {
-				stopLeftEngine();
-				stopLeft = true;
-			}
-		}
-		if (!stopRight) {
-			if (rightCounts >= rightTargetCounts) {
-				stopRightEngine();
-				stopRight = true;
-			}
-		}
-	}
-	go(0,0);
-	moveServo(90);
-}
-
-static void rotateRightDegree(int nr) {
-	if ( (nr >= 0 && nr < 180) || ( nr <= 0 && nr > -180) )
-		moveServo(nr);
-	bool stopLeft = false;
-	bool stopRight = false;
-	long int leftTargetCounts = countRotate90Left*nr/90;
-	long int rightTargetCounts = countRotate90Right*nr/90;
-#ifdef SERIAL_DEBUG_MODE
-	printf("Rotate %d right with left=%ld and right=%ld\r\n", nr, leftTargetCounts, rightTargetCounts);
-#endif	
-	go(currentPower,-currentPower);
-	while ( !stopLeft || !stopRight){
-		if (!stopLeft) {
-			if (leftCounts >= leftTargetCounts) {
-				stopLeftEngine();
-				stopLeft = true;
-			}
-		}
-		if (!stopRight) {
-			if (rightCounts >= rightTargetCounts) {
-				stopRightEngine();
-				stopRight = true;
-			}
-		}
-	}
-	go(0,0);
-	moveServo(90);
-}
-
-void clearEncoders() {
-	leftCounts = 0;
-	rightCounts = 0;
-}
-
-/*
- * Move the platform with distance or rotate with encoders
- */
-void moveOrRotateWithDistance(float moveData, int rotateData) {
-	
-#ifdef TEST_COMMANDS
-	printf("moveOrRotateWithDistance distance=%f rotate=%d\n", moveData, rotateData);
-	fflush(stdout);
-	return;
-#endif
-	humanCommand = false;
-	go(0,0);
-	clearEncoders();
-	if (rotateData == 0) {
-#ifdef SERIAL_DEBUG_MODE
-	printf("Move linear to %f\r\n", moveData);
-#endif
-		moveWithDistance(moveData);
-	} else if (fabs(moveData) <= 0.01) {
-		if (rotateData == -1) {
-#ifdef SERIAL_DEBUG_MODE
-			printf("Rotate 90 degrees left\r\n");
-#endif
-			rotate90Left();
-		} else if (rotateData == 1) {
-#ifdef SERIAL_DEBUG_MODE
-			printf("Rotate 90 degrees right\r\n");
-#endif
-			rotate90Right();
-		} else if (rotateData < 0) {
-#ifdef SERIAL_DEBUG_MODE
-			printf("Rotate %d degrees left\r\n",-rotateData);
-#endif
-			rotateLeftDegree(-rotateData);
-		} else {
-#ifdef SERIAL_DEBUG_MODE
-			printf("Rotate %d degrees right\r\n",rotateData);
-#endif
-			rotateRightDegree(rotateData);
-		}
-	}
-}

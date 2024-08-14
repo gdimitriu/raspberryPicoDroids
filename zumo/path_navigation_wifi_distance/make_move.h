@@ -24,9 +24,6 @@
 #ifndef __MAKE_MOVE_H__
 #define __MAKE_MOVE_H__
 
-#include "configuration.h"
-
-
 /*
  * make the move of the platform
  */

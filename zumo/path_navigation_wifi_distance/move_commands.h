@@ -1,7 +1,7 @@
 /*
  * moving robot raspberry pico w (WIFI based)
  * 
- * 2enginesmove.h (actual driving the engines)
+ * move_commands.h (deal with path commands)
  * 
  * Copyright 2024 Gabriel Dimitriu
  *
@@ -21,28 +21,28 @@
  * along with raspberryPicoDroids; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 */
-#ifndef _2ENGINESMOVE_H_
-#define _2ENGINESMOVE_H_
+#ifndef _MOVE_COMMANDS_H_
+#define _MOVE_COMMANDS_H_
 
 	/**
-	 * break the engines
+	 * put a command (path or engine settings) into the list
 	 */
-	void breakEngines();
-	
+	bool putCommand();
+
 	/**
-	 * move with different speed on each engine
-	 * @param speedLeft left engine power
-	 * @param sppedRight right engine power
+	 * clear command list
 	 */
-	void go(int speedLeft, int speedRight);
-	
+	bool clearCommandList();
+
 	/**
-	 * stop the left engine
+	 * move the robot using command list into direct order of the commands
 	 */
-	void stopLeftEngine();
-	
+	void moveWithCommandsInDirectOrder();
+
 	/**
-	 * stop the right engine
+	 * move the robot using command list into reverse order of the commands
 	 */
-	void stopRightEngine();
-#endif //_2ENGINES_MOVE_H_
+	void moveWithCommandsInReverseOrder();
+
+
+#endif
