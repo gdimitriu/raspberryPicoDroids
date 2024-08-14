@@ -187,6 +187,8 @@ static void moveWithDistance(float moveData) {
 	bool stopLeft = false;
 	bool stopRight = false;
 	float distance;
+	leftCurrentDistance = 0;
+	rightCurrentDistance = 0;
 	if (moveData > 0) {
 		distance = moveData;
 		go(currentPower,currentPower);
@@ -225,8 +227,6 @@ static void moveWithDistance(float moveData) {
 		}
 	}
 	go(0,0);
-	leftCurrentDistance = 0;
-	rightCurrentDistance = 0;
 }
 
 static void rotate90Left() {

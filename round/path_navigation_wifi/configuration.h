@@ -86,7 +86,7 @@ typedef struct TCP_SERVER_T_ {
     int recv_len;
 } TCP_SERVER_T;
 	
-	#define SERIAL_DEBUG_MODE true
+//	#define SERIAL_DEBUG_MODE true
 
 //	#define TEST_COMMANDS true
 #ifdef TEST_COMMANDS

@@ -4,24 +4,9 @@
 
 Those robots are made unsing zumo or round platform.
 
-They have two wheel drive, encoders and front and rear sensors and BLE for interactions.
+There are two chassy version of them:
 
-![round robot](docs/pico_round.jpg)
-
-## This droid could be controlled by the [android application](https://github.com/gdimitriu/DroidControlCenter) or by any BLE application.
-
-## Hardware
-
-The power for round is 3.7V LiIon.
-
-![power lines](docs/power_lines.jpeg)
-
-
-The logical connections for round are:
-
-![logical lines](docs/logical_lines.jpeg)
-
-## The encoder_sensors_ble is simpler version which does not have path navigation.
+Round chassy (using two weel drive) [round](round/README.md)
 
 ## The same commands are also subset of commands for all droids.
 
@@ -60,4 +45,5 @@ The logical connections for round are:
 	- for yyy < 0 it will rotate left with -yyy degrees
 	- for yyy > 0 it will rotate right with yyy degrees
 	- for xxx = 0 and yyy = 0 it will coast
+
 
