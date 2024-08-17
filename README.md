@@ -8,6 +8,8 @@ There are two chassy version of them:
 
 Round chassy (using two weel drive) [round](round/README.md)
 
+Zumo chassy [zumo](zumo/README.md)
+
 ## The same commands are also subset of commands for all droids.
 
  If an object is in front when the droid is moving forward it will stop until another unconficting command is given.
@@ -46,4 +48,11 @@ Round chassy (using two weel drive) [round](round/README.md)
 	- for yyy > 0 it will rotate right with yyy degrees
 	- for xxx = 0 and yyy = 0 it will coast
 
+- n# clear the path in memory
+
+- Nxxxx# add command path
+
+- D# move in direct path (as the commands where enter)
+
+- B# move in reverse order (as the command where enter)
 
