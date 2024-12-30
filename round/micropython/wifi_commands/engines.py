@@ -34,7 +34,7 @@ def callback(pin):
     if pin is configuration.front_sensor:
         if direction == 1:
             go(0, 0)
-    elif pin == configuration.rear_sensor:
+    elif pin is configuration.rear_sensor:
         if direction == -1:
             go(0, 0)
 
