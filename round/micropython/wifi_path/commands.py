@@ -20,8 +20,9 @@
  along with raspberryPicoDroids; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 """
-from engines import break_engines, go
+from engines import break_engines, go, set_human_control, move_with_distance
 import configuration
+import _thread
 
 
 class Command:
@@ -39,11 +40,11 @@ class Command:
         if configuration.DEBUG_MODE:
             print("MoveData(%s)" % request)
         if len(request) == 1:
-            self._command_without_data(request)
+            self.command_without_data(request)
         else:
-            self._command_with_data(request.decode("ascii"))
+            self.command_with_data(request.decode("ascii"))
 
-    def _command_without_data(self, request):
+    def command_without_data(self, request):
         if configuration.DEBUG_MODE:
             print("CommandWithoutData(%s)" % request)
         if request == b"v":
@@ -59,7 +60,7 @@ class Command:
         elif request == b'b':
             break_engines()
 
-    def _command_with_data(self, request):
+    def command_with_data(self, request):
         if configuration.DEBUG_MODE:
             print("CommandWithData(%s)" % request)
         if request[0] == 'V':
@@ -77,6 +78,7 @@ class Command:
             else:
                 self.sock.send("OK\r\n")
         elif request[0] == 'M':
+            set_human_control(True)
             values = request[1:].split(",")
             if len(values) == 2:
                 rotate_data = int(values[1])
@@ -93,6 +95,14 @@ class Command:
                         go(self.current_power, self.current_power)
                     else:
                         go(-self.current_power, -self.current_power)
+        elif request[0] == 'm':
+            set_human_control(False)
+            values = request[1:].split(",")
+            if len(values) == 2:
+                rotate_data = int(values[1])
+                move_data = float(values[0])
+                if abs(move_data) <= 0.01 and rotate_data == 0:
+                    go(0, 0)
 
         else:  # unsupported command
             self.sock.send("OK\r\n")

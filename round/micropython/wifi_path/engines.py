@@ -22,21 +22,41 @@
 """
 from machine import Pin
 import configuration
+import math
 
 direction = 0
+_current_left_encoder = 0
+_current_right_encoder = 0
+_left_current_distance = 0.0
+_right_current_distance = 0.0
+_left_PPI = 0.0
+_right_PPI = 0.0
+_human_control = True
+_stop_left = False
+_stop_right = False
+
+def set_human_control(value):
+    global _human_control
+    _human_control = value
 
 
 def callback(pin):
     """callback for encoders"""
     global direction
+    global _current_left_encoder
+    global _current_right_encoder
     if configuration.DEBUG_MODE:
         print("Callback(%s)" % pin)
     if pin is configuration.front_sensor:
-        if direction == 1:
+        if direction == 1 and _human_control:
             go(0, 0)
-    elif pin == configuration.rear_sensor:
-        if direction == -1:
+    elif pin is configuration.rear_sensor:
+        if direction == -1 and _human_control:
             go(0, 0)
+    elif pin is configuration.left_motor_encoder:
+        _current_left_encoder += 1
+    elif pin is configuration.right_motor_encoder:
+        _current_right_encoder += 1
 
 
 def init_encoders():
@@ -45,8 +65,12 @@ def init_encoders():
     this should be called every time the move wth distance is called
     or when it is with path navigation
     """
+    global _current_right_encoder
+    global _current_left_encoder
     if configuration.DEBUG_MODE:
         print("InitEncoders")
+    _current_left_encoder = 0
+    _current_right_encoder = 0
     configuration.left_motor_encoder.irq(trigger=Pin.IRQ_RISING, handler=callback)
     configuration.right_motor_encoder.irq(trigger=Pin.IRQ_RISING, handler=callback)
 
@@ -67,8 +91,12 @@ def init_engines():
     initialize the engines and sensors
     this should be called only once
     """
+    global _right_PPI
+    global _left_PPI
     if configuration.DEBUG_MODE:
         print("InitEngines")
+    _left_PPI = configuration.LEFT_RESOLUTION_ENCODER / (2 * math.pi * configuration.WHEEL_RADIUS)
+    _right_PPI = configuration.RIGHT_RESOLUTION_ENCODER / (2 * math.pi * configuration.WHEEL_RADIUS)
     configuration.front_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
     configuration.rear_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
     configuration.leftMotorPin1.freq(configuration.PWM_FREQUENCY)
@@ -136,9 +164,69 @@ def go(leftSpeed=0, rightSpeed=0):
 
 
 def break_engines():
+    global _stop_left
+    global _stop_right
     if configuration.DEBUG_MODE:
         print("BreakEngines")
     configuration.leftMotorPin1.duty_u16(configuration.ABSOLUTE_MAX_POWER)
     configuration.leftMotorPin2.duty_u16(configuration.ABSOLUTE_MAX_POWER)
     configuration.rightMotorPin1.duty_u16(configuration.ABSOLUTE_MAX_POWER)
     configuration.rightMotorPin2.duty_u16(configuration.ABSOLUTE_MAX_POWER)
+    _stop_left = True
+    _stop_right = True
+
+
+def stop_lef_engine():
+    configuration.leftMotorPin1.duty_u16(0)
+    configuration.leftMotorPin2.duty_u16(0)
+
+
+def stop_right_engine():
+    configuration.rightMotorPin1.duty_u16(0)
+    configuration.rightMotorPin2.duty_u16(0)
+
+
+def move_with_distance(move_data, current_power, run_distance):
+    global _left_current_distance
+    global _right_current_distance
+    global _right_PPI
+    global _left_PPI
+    global _current_left_encoder
+    global _current_right_encoder
+    global _stop_left
+    global _stop_right
+    _left_current_distance = 0.0
+    _right_current_distance = 0.0
+    _stop_left = False
+    _stop_right = False
+    if move_data > 0:
+        distance = move_data
+        go(current_power, current_power)
+    elif move_data < 0:
+        distance = -move_data
+        go(-current_power, -current_power)
+    else:
+        go(0, 0)
+        return
+    while not _stop_left or not _stop_right:
+        if move_data > 0:
+            if configuration.front_sensor.value() == 0:
+                _stop_left = True
+                _stop_right = True
+        else:
+            if configuration.rear_sensor.value() == 0:
+                _stop_left = True
+                _stop_right = True
+        if not _stop_left:
+            _left_current_distance = _current_left_encoder / _left_PPI
+            if (distance - _left_current_distance) <= 0.02:
+                stop_lef_engine()
+                _stop_left = True
+        if not _stop_right:
+            _right_current_distance = _current_right_encoder / _right_PPI
+            if (distance - _right_current_distance) <= 0.02:
+                stop_right_engine()
+                _stop_right = True
+    go(0, 0)
+    run_distance[0] = _left_current_distance
+    run_distance[1] = _right_current_distance
