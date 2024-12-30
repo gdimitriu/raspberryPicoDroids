@@ -44,8 +44,8 @@ unsigned int leftMotorEncoder = 16;
 long leftResolutionCodor = 20;
 float leftPPI;
 //right engine
-unsigned int rightMotorPin1 = 11;
-unsigned int rightMotorPin2 = 10;
+unsigned int rightMotorPin1 = 10;
+unsigned int rightMotorPin2 = 11;
 unsigned int rightMotorEncoder = 17;
 long rightResolutionCodor = 20;
 float rightPPI;
