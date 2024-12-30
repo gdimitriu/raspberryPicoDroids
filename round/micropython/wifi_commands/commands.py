@@ -1,5 +1,5 @@
 """
- moving robot raspberry pico and BLE
+ moving robot raspberry pico and wifi
 
  commands (the actual driver of the commands received from wifi)
 
@@ -63,7 +63,9 @@ class Command:
         if configuration.DEBUG_MODE:
             print("CommandWithData(%s)" % request)
         if request[0] == 'V':
-            self.max_power = int(request[1:])
+            value = int(request[1:])
+            if value <= configuration.ABSOLUTE_MAX_POWER:
+                self.max_power = value
             self.sock.send("OK\r\n")
         elif request[0] == 'v':
             self.min_power = int(request[1:])

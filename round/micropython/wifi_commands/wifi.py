@@ -1,5 +1,5 @@
 """
- moving robot raspberry pico and BLE
+ moving robot raspberry pico and wifi
 
  wifi (the main entry point for wifi communication)
 

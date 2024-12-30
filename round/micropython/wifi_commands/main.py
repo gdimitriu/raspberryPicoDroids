@@ -1,7 +1,7 @@
 """
  moving robot raspberry pico and wifi
 
- configuration (this hold the configuration and main settings of the robot)
+ main entry point
 
  Copyright 2024 Gabriel Dimitriu
   This file is part of raspberryPicoDroids project.
@@ -20,25 +20,10 @@
  along with raspberryPicoDroids; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 """
-from machine import Pin, PWM
-SSID = 'YOUR_SSID'
-PASSWORD = 'YOUR_PASSWORD'
-PORT = 4242
-ABSOLUTE_MAX_POWER = 65025
-MAX_POWER = 65025
-MIN_POWER = 30000
-# left engine
-leftMotorPin1 = PWM(Pin(15))
-leftMotorPin2 = PWM(Pin(14))
+import engines
+import wifi
 
-# right engine
-rightMotorPin1 = PWM(Pin(10))
-rightMotorPin2 = PWM(Pin(11))
-
-# sensors
-front_sensor = Pin(13, Pin.IN, Pin.PULL_UP)
-rear_sensor = Pin(12, Pin.IN, Pin.PULL_UP)
-
-DEBUG_MODE = True
-
-PWM_FREQUENCY = 4000  # 4800000 4.8Mhz
+engines.init_engines()
+sock = wifi.init_wifi()
+while True:
+    wifi.receive_data(sock)
