@@ -21,6 +21,8 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 """
 from engines import break_engines, go, set_human_control, move_with_distance
+from engines import rotate_90_left, rotate_90_right, rotate_degree
+from engines import init_encoders, disable_encoders
 import configuration
 import _thread
 
@@ -60,7 +62,7 @@ class Command:
         elif request == b'b':
             break_engines()
 
-    def command_with_data(self, request):
+    def command_with_data(self, request, is_auto=False):
         if configuration.DEBUG_MODE:
             print("CommandWithData(%s)" % request)
         if request[0] == 'V':
@@ -97,12 +99,25 @@ class Command:
                         go(-self.current_power, -self.current_power)
         elif request[0] == 'm':
             set_human_control(False)
+            init_encoders()
             values = request[1:].split(",")
             if len(values) == 2:
                 rotate_data = int(values[1])
                 move_data = float(values[0])
                 if abs(move_data) <= 0.01 and rotate_data == 0:
                     go(0, 0)
-
+                elif rotate_data == 0:
+                    run_distance = {}
+                    move_with_distance(move_data, self.current_power, run_distance)
+                    if not is_auto:
+                        self.sock.send("I%f,%f\r\n" % (run_distance[0], run_distance[1]))
+                else:
+                    if rotate_data == -90:  # left
+                        rotate_90_left(self.current_power)
+                    elif rotate_data == 90:  # right
+                        rotate_90_right(self.current_power)
+                    else:
+                        rotate_degree(rotate_data, self.current_power)
+            disable_encoders()
         else:  # unsupported command
             self.sock.send("OK\r\n")

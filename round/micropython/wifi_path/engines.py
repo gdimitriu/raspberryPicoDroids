@@ -35,6 +35,7 @@ _human_control = True
 _stop_left = False
 _stop_right = False
 
+
 def set_human_control(value):
     global _human_control
     _human_control = value
@@ -176,7 +177,7 @@ def break_engines():
     _stop_right = True
 
 
-def stop_lef_engine():
+def stop_left_engine():
     configuration.leftMotorPin1.duty_u16(0)
     configuration.leftMotorPin2.duty_u16(0)
 
@@ -195,6 +196,8 @@ def move_with_distance(move_data, current_power, run_distance):
     global _current_right_encoder
     global _stop_left
     global _stop_right
+    if configuration.DEBUG_MODE:
+        print("Moving with distance %g" % move_data)
     _left_current_distance = 0.0
     _right_current_distance = 0.0
     _stop_left = False
@@ -220,7 +223,7 @@ def move_with_distance(move_data, current_power, run_distance):
         if not _stop_left:
             _left_current_distance = _current_left_encoder / _left_PPI
             if (distance - _left_current_distance) <= 0.02:
-                stop_lef_engine()
+                stop_left_engine()
                 _stop_left = True
         if not _stop_right:
             _right_current_distance = _current_right_encoder / _right_PPI
@@ -230,3 +233,84 @@ def move_with_distance(move_data, current_power, run_distance):
     go(0, 0)
     run_distance[0] = _left_current_distance
     run_distance[1] = _right_current_distance
+
+
+def rotate_90_left(current_power):
+    global _stop_left
+    global _stop_right
+    global _current_left_encoder
+    global _current_right_encoder
+    _stop_left = False
+    _stop_right = False
+    if configuration.DEBUG_MODE:
+        print("Rotate 90 left with left=%g and right=%g" % (configuration.COUNT_ROTATE_90_LEFT,
+                                                            configuration.COUNT_ROTATE_90_RIGHT))
+    go(-current_power, current_power)
+    while not _stop_left or not _stop_right:
+        if not _stop_left:
+            if _current_left_encoder >= configuration.COUNT_ROTATE_90_LEFT:
+                stop_left_engine()
+                _stop_left = True
+        if not _stop_right:
+            if _current_right_encoder >= configuration.COUNT_ROTATE_90_RIGHT:
+                stop_right_engine()
+                _stop_right = True
+    go(0, 0)
+
+
+def rotate_90_right(current_power):
+    global _stop_left
+    global _stop_right
+    global _current_left_encoder
+    global _current_right_encoder
+    _stop_left = False
+    _stop_right = False
+    if configuration.DEBUG_MODE:
+        print("Rotate 90 right with left=%g and right=%g" % (configuration.COUNT_ROTATE_90_LEFT,
+                                                             configuration.COUNT_ROTATE_90_RIGHT))
+    go(current_power, -current_power)
+    while not _stop_left or not _stop_right:
+        if not _stop_left:
+            if _current_left_encoder >= configuration.COUNT_ROTATE_90_LEFT:
+                stop_left_engine()
+                _stop_left = True
+        if not _stop_right:
+            if _current_right_encoder >= configuration.COUNT_ROTATE_90_RIGHT:
+                stop_right_engine()
+                _stop_right = True
+    go(0, 0)
+
+
+def rotate_degree(rotate_data, current_power):
+    global _stop_left
+    global _stop_right
+    global _current_left_encoder
+    global _current_right_encoder
+    _stop_left = False
+    _stop_right = False
+    if rotate_data < 0:
+        _left_target_counts = configuration.COUNT_ROTATE_90_LEFT * (-rotate_data) / 90
+        _right_target_counts = configuration.COUNT_ROTATE_90_RIGHT * (-rotate_data) / 90
+        if configuration.DEBUG_MODE:
+            print("Rotate %g left with left=%g and right=%g" % (rotate_data, _left_target_counts,
+                                                                _right_target_counts))
+    else:
+        _left_target_counts = configuration.COUNT_ROTATE_90_LEFT * rotate_data / 90
+        _right_target_counts = configuration.COUNT_ROTATE_90_RIGHT * rotate_data / 90
+        if configuration.DEBUG_MODE:
+            print("Rotate %g right with left=%g and right=%g" % (rotate_data, _left_target_counts,
+                                                                 _right_target_counts))
+    if rotate_data < 0:
+        go(-current_power, current_power)
+    else:
+        go(current_power, -current_power)
+    while not _stop_left or not _stop_right:
+        if not _stop_left:
+            if _current_left_encoder >= _left_target_counts:
+                stop_left_engine()
+                _stop_left = True
+        if not _stop_right:
+            if _current_right_encoder >= _right_target_counts:
+                stop_right_engine()
+                _stop_right = True
+    go(0, 0)
