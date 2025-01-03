@@ -25,4 +25,7 @@ import wifi
 
 engines.init_engines()
 sock = wifi.init_wifi()
-wifi.receive_data(sock)
+# infinite loop to receive data from robot control center
+# only one client at a time
+while True:
+    wifi.receive_data(sock)
