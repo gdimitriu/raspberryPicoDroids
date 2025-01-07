@@ -25,7 +25,7 @@ import socket
 import configuration
 import time
 from commands import Command
-
+from path_navigation import PathNavigation
 
 def init_wifi():
     """
@@ -79,6 +79,7 @@ def receive_data(sock):
             print('connection closed')
         return
     command = Command(cl)
+    PathNavigation(command)
     try:
         while True:
             request = cl.readline(1024)

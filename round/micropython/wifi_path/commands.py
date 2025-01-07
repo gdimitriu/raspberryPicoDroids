@@ -33,6 +33,10 @@ class Command:
         self.min_power = configuration.MIN_POWER
         self.max_power = configuration.MAX_POWER
         self.sock = sock
+        self.path_navigation = None
+
+    def set_path_navigation(self, path_navigation):
+        self.path_navigation = path_navigation
 
     def move_data(self, request):
         """
@@ -61,6 +65,15 @@ class Command:
             self.sock.send("unsupported\r\n")
         elif request == b'b':
             break_engines()
+        elif request == b'D':
+            self.path_navigation.move_direct()
+            self.sock.send("OK\r\n")
+        elif request == b'B':
+            self.path_navigation.move_reverse()
+            self.sock.send("OK\r\n")
+        elif request == b'n':
+            self.path_navigation.clear_navigation()
+            self.sock.send("OK\r\n")
 
     def command_with_data(self, request, is_auto=False):
         if configuration.DEBUG_MODE:
@@ -119,5 +132,20 @@ class Command:
                     else:
                         rotate_degree(rotate_data, self.current_power)
             disable_encoders()
+        elif request[0] == 'N':
+            if request[1] == 'D':
+                self.path_navigation.move_direct_with_file(request[2:])
+            elif request[1] == 'B':
+                self.path_navigation.move_reverse_with_file(request[2:])
+            elif request[1] == 'f':
+                if request[2] == 's':
+                    self.path_navigation.save_path_file(request[3:])
+                elif request[2] == 'l':
+                    self.path_navigation.load_path_file(request[3:])
+                elif request[2] == 'r':
+                    self.path_navigation.remove_path_file(request[3:])
+            else:
+                self.path_navigation.add_path_command(request[1:])
+            self.sock.send("OK\r\n")
         else:  # unsupported command
             self.sock.send("OK\r\n")
