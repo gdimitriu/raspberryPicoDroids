@@ -67,16 +67,48 @@ class PathNavigation:
     def add_path_command(self, command):
         if configuration.DEBUG_MODE:
             print("AddPathCommand(%s)" % command)
-        self.current_path_data.append(command + "\n")
+        if self.current_path_file is not None:
+            self.current_path_file.write(command + "\n")
+        else:
+            self.current_path_data.append(command + "\n")
 
     def load_path_file(self, file):
-        pass
+        if file in os.listdir("path"):
+            if configuration.DEBUG_MODE:
+                print("load path file %s" % file)
+            self.current_path_data = []
+            with open("path" + os.sep + file, "r") as f:
+                while True:
+                    line = f.readline()
+                    if not line:
+                        break
+                    if configuration.DEBUG_MODE:
+                        print("add command %s" % line[:-1])
+                    self.current_path_data.append(line[:-1])
 
     def save_path_file(self, file):
-        pass
+        if "path" not in os.listdir():
+            os.mkdir("path")
+        self.remove_path_file(file)
+        with open("path" + os.sep + file, "w") as f:
+            for command in self.current_path_data:
+                f.write(command + "\n")
 
     def remove_path_file(self, file):
-        os.remove(file)
+        if file in os.listdir("path"):
+            os.remove(file)
 
     def clear_navigation(self):
         self.current_path_data = []
+
+    def start_write_path(self, file):
+        if configuration.DEBUG_MODE:
+            print("start write file %s" % file)
+        if "path" not in os.listdir():
+            os.mkdir("path")
+        self.remove_path_file(file)
+        self.current_path_file = open("path" + os.sep + file, "w")
+
+    def end_write_path(self):
+        self.current_path_file.close()
+        self.current_path_file = None

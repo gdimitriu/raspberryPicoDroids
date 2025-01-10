@@ -144,6 +144,10 @@ class Command:
                     self.path_navigation.load_path_file(request[3:])
                 elif request[2] == 'r':
                     self.path_navigation.remove_path_file(request[3:])
+                elif request[2] == 'b':
+                    self.path_navigation.start_write_path(request[3:])
+                elif request[2] == 'e':
+                    self.path_navigation.end_write_path()
             else:
                 self.path_navigation.add_path_command(request[1:])
             self.sock.send("OK\r\n")
