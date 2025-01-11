@@ -85,9 +85,9 @@ def receive_data(sock):
             request = cl.readline(1024)
             if configuration.DEBUG_MODE:
                 print(request)
-            if request != b'':
+            if request != b'' and request != b"exit#\n":
                 command.move_data(request[:-2])
-            else:
+            elif request == b"exit#\n":
                 cl.close()
                 if configuration.DEBUG_MODE:
                     print('connection closed')

@@ -96,7 +96,7 @@ class PathNavigation:
 
     def remove_path_file(self, file):
         if file in os.listdir("path"):
-            os.remove(file)
+            os.remove("path" + os.sep + file)
 
     def clear_navigation(self):
         self.current_path_data = []
