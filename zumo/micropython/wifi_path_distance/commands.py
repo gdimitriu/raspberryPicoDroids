@@ -24,7 +24,6 @@ from engines import break_engines, go, set_human_control, move_with_distance
 from engines import rotate_90_left, rotate_90_right, rotate_degree
 from engines import init_encoders, disable_encoders
 import configuration
-import _thread
 
 
 class Command:
@@ -32,6 +31,8 @@ class Command:
         self.current_power = configuration.MAX_POWER
         self.min_power = configuration.MIN_POWER
         self.max_power = configuration.MAX_POWER
+        self.stop_distance = configuration.STOP_DISTANCE
+        self.low_power_distance = configuration.LOW_POWER_DISTANCE
         self.sock = sock
         self.path_navigation = None
 
@@ -60,9 +61,9 @@ class Command:
         elif request == b'c':
             self.sock.send("%g\r\n" % self.current_power)
         elif request == b'd':
-            self.sock.send("unsupported\r\n")
+            self.sock.send("%g\r\n" % self.low_power_distance)
         elif request == b's':
-            self.sock.send("unsupported\r\n")
+            self.sock.send("%g\r\n" % self.stop_distance)
         elif request == b'b':
             break_engines()
         elif request == b'D':
@@ -92,6 +93,14 @@ class Command:
                 self.sock.send("OK\r\n")
             else:
                 self.sock.send("OK\r\n")
+        elif request[0] == 'd':
+            if int(request[1:]) <= configuration.MAX_RANGE_SENSOR:
+                self.low_power_distance = int(request[1:])
+            self.sock.send("OK\r\n")
+        elif request[0] == 's':
+            if int(request[1:]) <= configuration.MAX_RANGE_SENSOR:
+                self.stop_distance = int(request[1:])
+            self.sock.send("OK\r\n")
         elif request[0] == 'M':
             set_human_control(True)
             values = request[1:].split(",")

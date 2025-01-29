@@ -23,6 +23,8 @@
 from machine import Pin
 import configuration
 import math
+import ioe_sr05_pio
+from servo import movecenter, move90left, move90right
 
 direction = 0
 _current_left_encoder = 0
@@ -48,13 +50,7 @@ def callback(pin):
     global _current_right_encoder
     if configuration.DEBUG_MODE:
         print("Callback(%s)" % pin)
-    if pin is configuration.front_sensor:
-        if direction == 1 and _human_control:
-            go(0, 0)
-    elif pin is configuration.rear_sensor:
-        if direction == -1 and _human_control:
-            go(0, 0)
-    elif pin is configuration.left_motor_encoder:
+    if pin is configuration.left_motor_encoder:
         _current_left_encoder += 1
     elif pin is configuration.right_motor_encoder:
         _current_right_encoder += 1
@@ -98,20 +94,19 @@ def init_engines():
         print("InitEngines")
     _left_PPI = configuration.LEFT_RESOLUTION_ENCODER / (2 * math.pi * configuration.WHEEL_RADIUS)
     _right_PPI = configuration.RIGHT_RESOLUTION_ENCODER / (2 * math.pi * configuration.WHEEL_RADIUS)
-    configuration.front_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
-    configuration.rear_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
     configuration.leftMotorPin1.freq(configuration.PWM_FREQUENCY)
     configuration.leftMotorPin2.freq(configuration.PWM_FREQUENCY)
     configuration.rightMotorPin1.freq(configuration.PWM_FREQUENCY)
     configuration.rightMotorPin2.freq(configuration.PWM_FREQUENCY)
+    movecenter()
 
 
-def go(leftSpeed=0, rightSpeed=0):
+def go(left_speed=0, right_speed=0):
     global direction
     if configuration.DEBUG_MODE:
-        print("Go(%g,%g)" % (leftSpeed, rightSpeed))
+        print("Go(%g,%g)" % (left_speed, right_speed))
 
-    if leftSpeed == 0 and rightSpeed == 0:
+    if left_speed == 0 and right_speed == 0:
         configuration.leftMotorPin1.duty_u16(0)
         configuration.leftMotorPin2.duty_u16(0)
         configuration.rightMotorPin1.duty_u16(0)
@@ -121,47 +116,39 @@ def go(leftSpeed=0, rightSpeed=0):
         direction = 0
         return
 
-    if leftSpeed > 0 and rightSpeed > 0 and configuration.front_sensor.value() == 0:
+    if left_speed > 0 and right_speed > 0 and ioe_sr05_pio.get_distance() <= configuration.STOP_DISTANCE:
         configuration.leftMotorPin1.duty_u16(0)
         configuration.leftMotorPin2.duty_u16(0)
         configuration.rightMotorPin1.duty_u16(0)
         configuration.rightMotorPin2.duty_u16(0)
         if configuration.DEBUG_MODE:
-            print("All on zero because of front collision")
+            print("All on zero because of front collision %g" % ioe_sr05_pio.get_distance())
         return
 
-    if leftSpeed < 0 and rightSpeed < 0 and configuration.rear_sensor.value() == 0:
-        configuration.leftMotorPin1.duty_u16(0)
-        configuration.leftMotorPin2.duty_u16(0)
-        configuration.rightMotorPin1.duty_u16(0)
-        configuration.rightMotorPin2.duty_u16(0)
-        if configuration.DEBUG_MODE:
-            print("All on zero because of rear collision")
-        return
-    if leftSpeed < 0 and rightSpeed < 0:
+    if left_speed < 0 and right_speed < 0:
         direction = -1
-    elif rightSpeed > 0 and leftSpeed > 0:
+    elif right_speed > 0 and left_speed > 0:
         direction = 1
-    if leftSpeed > 0:
-        configuration.leftMotorPin1.duty_u16(leftSpeed)
+    if left_speed > 0:
+        configuration.leftMotorPin1.duty_u16(left_speed)
         configuration.leftMotorPin2.duty_u16(0)
         if configuration.DEBUG_MODE:
-            print("Left %g:0" % leftSpeed)
+            print("Left %g:0" % left_speed)
     else:
         configuration.leftMotorPin1.duty_u16(0)
-        configuration.leftMotorPin2.duty_u16(-leftSpeed)
+        configuration.leftMotorPin2.duty_u16(-left_speed)
         if configuration.DEBUG_MODE:
-            print("Left 0:%g" % -leftSpeed)
-    if rightSpeed > 0:
-        configuration.rightMotorPin1.duty_u16(rightSpeed)
+            print("Left 0:%g" % -left_speed)
+    if right_speed > 0:
+        configuration.rightMotorPin1.duty_u16(right_speed)
         configuration.rightMotorPin2.duty_u16(0)
         if configuration.DEBUG_MODE:
-            print("Right %g:0" % rightSpeed)
+            print("Right %g:0" % right_speed)
     else:
         configuration.rightMotorPin1.duty_u16(0)
-        configuration.rightMotorPin2.duty_u16(-rightSpeed)
+        configuration.rightMotorPin2.duty_u16(-right_speed)
         if configuration.DEBUG_MODE:
-            print("Right 0:%g" % -rightSpeed)
+            print("Right 0:%g" % -right_speed)
 
 
 def break_engines():
@@ -212,14 +199,6 @@ def move_with_distance(move_data, current_power, run_distance):
         go(0, 0)
         return
     while not _stop_left or not _stop_right:
-        if move_data > 0:
-            if configuration.front_sensor.value() == 0:
-                _stop_left = True
-                _stop_right = True
-        else:
-            if configuration.rear_sensor.value() == 0:
-                _stop_left = True
-                _stop_right = True
         if not _stop_left:
             _left_current_distance = _current_left_encoder / _left_PPI
             if (distance - _left_current_distance) <= 0.02:

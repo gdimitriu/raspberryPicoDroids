@@ -21,17 +21,17 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 """
 from machine import Pin, PWM
-SSID = 'YOUR-SSID'
+SSID = 'YOUR_SSID'
 PASSWORD = 'YOUR_PASSWORD'
 PORT = 4242
 ABSOLUTE_MAX_POWER = 65025
 MAX_POWER = 65025
 MIN_POWER = 30000
-LEFT_RESOLUTION_ENCODER = 20
-WHEEL_RADIUS = 3.25
-RIGHT_RESOLUTION_ENCODER = 20
-COUNT_ROTATE_90_LEFT = 8
-COUNT_ROTATE_90_RIGHT = 8
+LEFT_RESOLUTION_ENCODER = 1452
+WHEEL_RADIUS = 2.0
+RIGHT_RESOLUTION_ENCODER = 1468
+COUNT_ROTATE_90_LEFT = 841
+COUNT_ROTATE_90_RIGHT = 830
 # left engine
 leftMotorPin1 = PWM(Pin(15))
 leftMotorPin2 = PWM(Pin(14))
@@ -42,9 +42,17 @@ rightMotorPin1 = PWM(Pin(10))
 rightMotorPin2 = PWM(Pin(11))
 right_motor_encoder = Pin(17, Pin.IN, Pin.PULL_UP)
 
-# sensors
-front_sensor = Pin(13, Pin.IN, Pin.PULL_UP)
-rear_sensor = Pin(12, Pin.IN, Pin.PULL_UP)
+STOP_DISTANCE = 5
+LOW_POWER_DISTANCE = 15
+
+# servo
+servoPin = PWM(Pin(22))
+# IOE-SR05
+PIO_RX_PIN = Pin(21, Pin.IN, Pin.PULL_UP)
+SR05EN = Pin(20, Pin.OUT)
+SR05EN.high()
+# IOE-SR05
+MAX_RANGE_SENSOR = 200
 
 DEBUG_MODE = True
 
