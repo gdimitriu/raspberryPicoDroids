@@ -125,6 +125,10 @@ def init_engines():
     configuration.leftRearMotorPin2.freq(configuration.PWM_FREQUENCY)
     configuration.rightRearMotorPin1.freq(configuration.PWM_FREQUENCY)
     configuration.rightRearMotorPin2.freq(configuration.PWM_FREQUENCY)
+    configuration.left_front_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
+    configuration.right_front_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
+    configuration.left_rear_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
+    configuration.right_rear_sensor.irq(trigger=Pin.IRQ_FALLING, handler=callback)
     movecenter()
 
 
@@ -147,7 +151,8 @@ def go(left_speed=0, right_speed=0):
         direction = 0
         return
 
-    if left_speed > 0 and right_speed > 0 and ioe_sr05_pio.get_distance() <= configuration.STOP_DISTANCE:
+    if left_speed > 0 and right_speed > 0 and (ioe_sr05_pio.get_distance() <= configuration.STOP_DISTANCE
+            or configuration.left_front_sensor.value() == 0 or configuration.right_front_sensor.value() == 0):
         configuration.leftFrontMotorPin1.duty_u16(0)
         configuration.leftFrontMotorPin2.duty_u16(0)
         configuration.rightFrontMotorPin1.duty_u16(0)
@@ -158,6 +163,20 @@ def go(left_speed=0, right_speed=0):
         configuration.rightRearMotorPin2.duty_u16(0)
         if configuration.DEBUG_MODE:
             print("All on zero because of front collision %g" % ioe_sr05_pio.get_distance())
+        return
+
+    if left_speed < 0 and right_speed < 0 \
+            and (configuration.left_rear_sensor.value() == 0 or configuration.right_rear_sensor.value() == 0):
+        configuration.leftFrontMotorPin1.duty_u16(0)
+        configuration.leftFrontMotorPin2.duty_u16(0)
+        configuration.rightFrontMotorPin1.duty_u16(0)
+        configuration.rightFrontMotorPin2.duty_u16(0)
+        configuration.leftRearMotorPin1.duty_u16(0)
+        configuration.leftRearMotorPin2.duty_u16(0)
+        configuration.rightRearMotorPin1.duty_u16(0)
+        configuration.rightRearMotorPin2.duty_u16(0)
+        if configuration.DEBUG_MODE:
+            print("All on zero because of rear collision %g" % ioe_sr05_pio.get_distance())
         return
 
     if left_speed < 0 and right_speed < 0:

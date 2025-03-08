@@ -66,10 +66,11 @@ _sm = StateMachine(
     in_base=configuration.PIO_RX_PIN,  # For WAIT, IN
     jmp_pin=configuration.PIO_RX_PIN,  # For JMP
 )
-# sm.irq(handler)
-_sm.active(1)
 
-isRunning = True
+
+# sm.irq(handler)
+
+
 def _get_distance():
     global _current_distance
     global _sm
@@ -97,12 +98,12 @@ def _get_distance():
     _lock.release()
 
 
-_current_distance = 0
 _lock = _thread.allocate_lock()
 
 
 def get_distance():
     global _current_distance
+    global _lock
     _lock.acquire()
     distance = _current_distance
     _lock.release()
@@ -122,7 +123,20 @@ def _readcontinous():
     _thread.exit()
 
 
-_thread.start_new_thread(_readcontinous, ())
+if configuration.IOE_SR05_DISABLE:
+    global isRunning
+    global _current_distance
+    isRunning = False
+    _current_distance = configuration.STOP_DISTANCE + 100
+else:
+    global isRunning
+    global _current_distance
+    _sm.active(1)
+    isRunning = True
+    _current_distance = 0
+    _thread.start_new_thread(_readcontinous, ())
+
 
 def stop_second_core():
+    global isRunning
     isRunning = False
