@@ -132,7 +132,7 @@ class Command:
                     run_distance = {}
                     move_with_distance(move_data, self.current_power, run_distance)
                     if not is_auto:
-                        self.sock.send("I%f,%f\r\n" % (run_distance[0], run_distance[1]))
+                        self.sock.send("I%f,%f,%f,%f\r\n" % (run_distance[0], run_distance[1], run_distance[2], run_distance[3]))
                 else:
                     if rotate_data == -90:  # left
                         rotate_90_left(self.current_power)

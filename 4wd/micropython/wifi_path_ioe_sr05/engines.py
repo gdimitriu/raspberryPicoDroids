@@ -68,7 +68,7 @@ def callback(pin):
     elif pin is configuration.left_front_sensor or pin is configuration.right_front_sensor:
         if direction == 1 and _human_control:
             go(0, 0)
-    elif pin is configuration.left_rear_sensor or pin in configuration.right_rear_sensor:
+    elif pin is configuration.left_rear_sensor or pin is configuration.right_rear_sensor:
         if direction == -1 and _human_control:
             go(0, 0)
 

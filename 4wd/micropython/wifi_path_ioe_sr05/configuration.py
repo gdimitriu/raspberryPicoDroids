@@ -29,8 +29,8 @@ MAX_POWER = 65025
 MIN_POWER = 30000
 RESOLUTION_ENCODER = 20
 WHEEL_RADIUS = 3.25
-COUNT_ROTATE_90_LEFT = 8
-COUNT_ROTATE_90_RIGHT = 8
+COUNT_ROTATE_90_LEFT = 16
+COUNT_ROTATE_90_RIGHT = 16
 # left front engine
 leftFrontMotorPin1 = PWM(Pin(16))
 leftFrontMotorPin2 = PWM(Pin(17))
@@ -49,7 +49,7 @@ left_rear_motor_encoder = Pin(1, Pin.IN, Pin.PULL_UP)
 # right rear engine
 rightRearMotorPin1 = PWM(Pin(8))
 rightRearMotorPin2 = PWM(Pin(9))
-right_rear_motor_encoder = Pin(7, Pin.IN, Pin.PULL_UP)
+right_rear_motor_encoder = Pin(2, Pin.IN, Pin.PULL_UP)
 
 STOP_DISTANCE = 5
 LOW_POWER_DISTANCE = 15
