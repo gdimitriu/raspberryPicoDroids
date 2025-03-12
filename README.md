@@ -10,6 +10,8 @@ Round chassy (using two weel drive) [round](round/README.md)
 
 Zumo chassy [zumo](zumo/README.md)
 
+4wd chassy [4wd](4wd/README.md)
+
 ## The same commands are also subset of commands for all droids.
 
  If an object is in front when the droid is moving forward it will stop until another unconficting command is given.
